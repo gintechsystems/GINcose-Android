@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="ReLinker-1.1">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/app/build/intermediates/exploded-aar/com.github.KeepSafe/ReLinker/1.1/res" />
+      <root url="jar://$PROJECT_DIR$/app/build/intermediates/exploded-aar/com.github.KeepSafe/ReLinker/1.1/jars/classes.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.github.KeepSafe/ReLinker/1.1/2460d80fd79efe5ac54eec07ad48a5c75d9d91d2/ReLinker-1.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
