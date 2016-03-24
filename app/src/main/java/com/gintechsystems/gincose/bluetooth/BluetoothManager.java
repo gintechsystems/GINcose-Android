@@ -26,6 +26,7 @@ import com.gintechsystems.gincose.messages.AuthRequestTxMessage;
 import com.gintechsystems.gincose.messages.AuthStatusRxMessage;
 import com.gintechsystems.gincose.messages.BondRequestTxMessage;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -199,14 +200,24 @@ public class BluetoothManager {
         }
 
         @Override
-        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-            Log.i("CharBytesChange", Arrays.toString(characteristic.getValue()));
-            Log.i("CharHexChange", Extensions.bytesToHex(characteristic.getValue()));
-        }
-
-        @Override
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                /*if (gincoseWrap.authStatus != null) {
+                    if (gincoseWrap.authStatus.authenticated != 1) {
+                        BluetoothGattCharacteristic authCharacteristic = mGatt.getService(UUID.fromString(BluetoothServices.CGMService)).getCharacteristic(UUID.fromString(BluetoothServices.Authentication));
 
+                        AuthChallengeRxMessage authChallenge = new AuthChallengeRxMessage(authCharacteristic.getValue());
+                        Log.i("AuthChallenge", Arrays.toString(authChallenge.challenge));
+                        Log.i("AuthChallenge", Arrays.toString(authChallenge.tokenHash));
+                    }
+                    else if (gincoseWrap.authStatus.bonded == 5) {
+                        Log.i("CharBytes", Arrays.toString(characteristic.getValue()));
+                        Log.i("CharHex", Extensions.bytesToHex(characteristic.getValue()));
+
+
+                    }
+                }*/
+            }
 
             mGatt.setCharacteristicNotification(characteristic, false);
         }
@@ -217,35 +228,16 @@ public class BluetoothManager {
                 Log.i("CharBytes", Arrays.toString(characteristic.getValue()));
                 Log.i("CharHex", Extensions.bytesToHex(characteristic.getValue()));
 
-                gincoseWrap.authStatus = new AuthStatusRxMessage(characteristic.getValue());
-
-                if (gincoseWrap.authStatus.authenticated == 1 && gincoseWrap.authStatus.bonded == 1) {
-                    Log.i("Auth", "Transmitter already authenticated.");
-                }
-                else if (gincoseWrap.authStatus.authenticated == 1 && gincoseWrap.authStatus.bonded == 5) {
-                    Log.i("Auth", "Transmitter requires bonding.");
-
-                    // Enable for authentication notifications.
-                    if (!mGatt.setCharacteristicNotification(characteristic, true)) {
-                        Log.e("BT", "Characteristic notification failed to be enabled.");
-                    }
-
-                    // Request bonding.
-                    BondRequestTxMessage bondRequest = new BondRequestTxMessage();
-                    characteristic.setValue(bondRequest.byteSequence);
-                    mGatt.writeCharacteristic(characteristic);
+                // Request authentication.
+                AuthStatusRxMessage authStatus = new AuthStatusRxMessage(characteristic.getValue());
+                if (authStatus.authenticated == 1 && authStatus.bonded == 1) {
+                    Log.i("Auth", "Transmitter already authenticated");
                 }
                 else {
-                    Log.i("Auth", "Transmitter requires authentication.");
+                    mGatt.setCharacteristicNotification(characteristic, true);
 
-                    // Enable for authentication notifications.
-                    if (!mGatt.setCharacteristicNotification(characteristic, true)) {
-                        Log.e("BT", "Characteristic notification failed to be enabled.");
-                    }
-
-                    // Request authentication.
-                    gincoseWrap.authRequest = new AuthRequestTxMessage();
-                    characteristic.setValue(gincoseWrap.authRequest.data.array());
+                    AuthRequestTxMessage authRequest = new AuthRequestTxMessage();
+                    characteristic.setValue(authRequest.data.array());
                     mGatt.writeCharacteristic(characteristic);
                 }
             }

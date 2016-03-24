@@ -46,8 +46,8 @@
       <file leaf-file-name="BluetoothManager.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/bluetooth/BluetoothManager.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.5067568">
-              <caret line="239" column="0" selection-start-line="239" selection-start-column="0" selection-end-line="239" selection-end-column="0" />
+            <state vertical-scroll-proportion="1.0675676">
+              <caret line="228" column="83" selection-start-line="228" selection-start-column="83" selection-end-line="228" selection-end-column="83" />
               <folding />
             </state>
           </provider>
@@ -57,18 +57,11 @@
         <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/TransmitterMessage.java">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="9" column="34" selection-start-line="9" selection-start-column="34" selection-end-line="9" selection-end-column="34" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="AuthRequestTxMessage.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/AuthRequestTxMessage.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="8" column="60" selection-start-line="8" selection-start-column="60" selection-end-line="8" selection-end-column="60" />
-              <folding />
+              <caret line="4" column="3" selection-start-line="4" selection-start-column="3" selection-end-line="4" selection-end-column="3" />
+              <folding>
+                <element signature="e#315#316#0" expanded="true" />
+                <element signature="e#339#340#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -77,7 +70,7 @@
         <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/AuthStatusRxMessage.java">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="8" column="22" selection-start-line="8" selection-start-column="22" selection-end-line="8" selection-end-column="22" />
+              <caret line="19" column="0" selection-start-line="19" selection-start-column="0" selection-end-line="19" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -1717,17 +1710,17 @@
         <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/GINcoseWrapper.java" />
         <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/Extensions.java" />
         <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/TransmitterTxMessage.java" />
-        <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/bluetooth/BluetoothManager.java" />
         <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/TransmitterRxMessage.java" />
         <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/AuthChallengeTxMessage.java" />
         <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/AuthStatusRxMessage.java" />
         <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/GlucoseTxMessage.java" />
         <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/DisconnectTxMessage.java" />
         <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/BondRequestTxMessage.java" />
-        <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/AuthRequestTxMessage.java" />
         <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/AuthChallengeRxMessage.java" />
         <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/KeepAliveTxMessage.java" />
         <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/TransmitterMessage.java" />
+        <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/AuthRequestTxMessage.java" />
+        <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/bluetooth/BluetoothManager.java" />
       </list>
     </option>
   </component>
@@ -2421,14 +2414,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/Transmitter.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="18" column="0" selection-start-line="18" selection-start-column="0" selection-end-line="18" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/MainActivity.java">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.3325792">
@@ -2511,14 +2496,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/TransmitterMessage.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="9" column="34" selection-start-line="9" selection-start-column="34" selection-end-line="9" selection-end-column="34" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/CRC.java">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.47297296">
@@ -2527,26 +2504,45 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/AuthStatusRxMessage.java">
+    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/AuthRequestTxMessage.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="8" column="22" selection-start-line="8" selection-start-column="22" selection-end-line="8" selection-end-column="22" />
+        <state vertical-scroll-proportion="0.27027026">
+          <caret line="13" column="24" selection-start-line="13" selection-start-column="24" selection-end-line="13" selection-end-column="24" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/AuthRequestTxMessage.java">
+    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/TransmitterMessage.java">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
-          <caret line="8" column="60" selection-start-line="8" selection-start-column="60" selection-end-line="8" selection-end-column="60" />
+          <caret line="4" column="3" selection-start-line="4" selection-start-column="3" selection-end-line="4" selection-end-column="3" />
+          <folding>
+            <element signature="e#315#316#0" expanded="true" />
+            <element signature="e#339#340#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/Transmitter.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.23648648">
+          <caret line="7" column="13" selection-start-line="7" selection-start-column="13" selection-end-line="7" selection-end-column="13" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/AuthStatusRxMessage.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="19" column="0" selection-start-line="19" selection-start-column="0" selection-end-line="19" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/bluetooth/BluetoothManager.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.5067568">
-          <caret line="239" column="0" selection-start-line="239" selection-start-column="0" selection-end-line="239" selection-end-column="0" />
+        <state vertical-scroll-proportion="1.0675676">
+          <caret line="228" column="83" selection-start-line="228" selection-start-column="83" selection-end-line="228" selection-end-column="83" />
           <folding />
         </state>
       </provider>

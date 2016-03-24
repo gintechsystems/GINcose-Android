@@ -8,4 +8,9 @@ import java.nio.ByteBuffer;
 public abstract class TransmitterMessage {
     public byte[] byteSequence = null;
     public ByteBuffer data = null;
+
+    public TransmitterMessage(){}
+    public TransmitterMessage(ByteBuffer d) {
+        data = d;
+    }
 }
