@@ -1,13 +1,7 @@
 package com.gintechsystems.gincose.messages;
 
-import android.util.Log;
-
-import com.gintechsystems.gincose.Extensions;
-
 import java.io.UnsupportedEncodingException;
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.UUID;
 
 /**
@@ -20,6 +14,8 @@ public class AuthRequestTxMessage extends TransmitterMessage {
 
     public AuthRequestTxMessage() {
         // Create the singleUseToken from a random UUID.
+        //byte[] uuidRequiredBytes = new byte[]{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
         UUID uuid = UUID.randomUUID();
         try {
             byte[] uuidBytes = uuid.toString().getBytes("UTF-8");

@@ -14,8 +14,10 @@ import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Build;
 import android.os.ParcelUuid;
 import android.util.Log;
@@ -224,26 +226,6 @@ public class BluetoothManager {
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             Log.i("CharWrite", Arrays.toString(characteristic.getValue()));
             Log.i("CharWrite", Extensions.bytesToHex(characteristic.getValue()));
-
-            /*if (status == BluetoothGatt.GATT_SUCCESS) {
-                if (gincoseWrap.authStatus != null) {
-                    if (gincoseWrap.authStatus.authenticated != 1) {
-                        AuthChallengeRxMessage authChallenge = new AuthChallengeRxMessage(characteristic.getValue());
-
-                        Log.i("AuthChallenge", Arrays.toString(authChallenge.challenge));
-                        Log.i("AuthChallenge", Arrays.toString(authChallenge.tokenHash));
-                    }
-                    else if (gincoseWrap.authStatus.bonded == 5) {
-                        Log.i("Auth", "Transmitter requires bonding.");
-                    }
-                    else {
-                        Log.i("Auth", String.valueOf(gincoseWrap.authStatus.authenticated));
-                        Log.i("Auth", String.valueOf(gincoseWrap.authStatus.bonded));
-                    }
-                }
-            }
-
-            mGatt.setCharacteristicNotification(characteristic, false);*/
         }
 
         @Override
@@ -278,6 +260,8 @@ public class BluetoothManager {
                         AuthChallengeRxMessage authChallenge = new AuthChallengeRxMessage(characteristic.getValue());
 
                         if (!Arrays.equals(authChallenge.tokenHash, calculateHash(gincoseWrap.authRequest.singleUseToken))) {
+                            Log.d("Auth", Extensions.bytesToHex(authChallenge.tokenHash));
+                            Log.d("Auth", Extensions.bytesToHex(calculateHash(gincoseWrap.authRequest.singleUseToken)));
                             Log.e("Auth", "Transmitter failed auth challenge");
                             return;
                         }
@@ -327,6 +311,25 @@ public class BluetoothManager {
         }
     };
 
+    private BroadcastReceiver mBondingBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(final Context context, final Intent intent) {
+            final BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+            final int bondState = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, -1);
+            final int previousBondState = intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE, -1);
+
+            Log.d("BondReceiver", "Bond state changed for: " + device.getAddress() + " new state: " + bondState + " previous: " + previousBondState);
+
+            // skip other devices
+            if (!device.getAddress().equals(mGatt.getDevice().getAddress()))
+                return;
+
+            if (bondState == BluetoothDevice.BOND_BONDED) {
+                gincoseWrap.currentAct.unregisterReceiver(this);
+            }
+        }
+    };
+
     @SuppressLint("GetInstance")
     private byte[] calculateHash(byte[] data) {
         if (data.length != 8) {
@@ -347,10 +350,12 @@ public class BluetoothManager {
 
         Cipher aesCipher;
         try {
-            aesCipher = Cipher.getInstance("AES/ECB/PKCS7Padding");
+            aesCipher = Cipher.getInstance("AES/ECB/NoPadding");
             SecretKeySpec skeySpec = new SecretKeySpec(key, "AES");
             aesCipher.init(Cipher.ENCRYPT_MODE, skeySpec);
             byte[] aesBytes = aesCipher.doFinal(doubleData, 0, doubleData.length);
+
+            //Log.d("Crypt", Arrays.toString(aesBytes));
 
             bb = ByteBuffer.allocate(8);
             bb.put(aesBytes, 0, 8);

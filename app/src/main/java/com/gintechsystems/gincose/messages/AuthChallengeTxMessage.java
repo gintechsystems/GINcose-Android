@@ -12,7 +12,7 @@ public class AuthChallengeTxMessage extends TransmitterMessage {
     public AuthChallengeTxMessage(byte[] challenge) {
         challengeHash = challenge;
 
-        data = ByteBuffer.allocate(17);
+        data = ByteBuffer.allocate(9);
         data.put((byte)opcode);
         data.put(challengeHash);
 

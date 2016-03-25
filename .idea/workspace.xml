@@ -53,25 +53,17 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="AuthChallengeTxMessage.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/AuthChallengeTxMessage.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="7" column="13" selection-start-line="7" selection-start-column="13" selection-end-line="7" selection-end-column="13" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="BluetoothManager.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/bluetooth/BluetoothManager.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.5927602">
-              <caret line="279" column="29" selection-start-line="279" selection-start-column="29" selection-end-line="279" selection-end-column="29" />
+            <state vertical-scroll-proportion="0.5588235">
+              <caret line="330" column="6" selection-start-line="330" selection-start-column="6" selection-end-line="330" selection-end-column="6" />
               <folding>
-                <element signature="e#1974#2006#0" expanded="true" />
-                <element signature="e#5845#7214#0" expanded="true" />
-                <element signature="e#7213#7214#0" expanded="true" />
+                <element signature="e#2053#2085#0" expanded="true" />
+                <element signature="e#5924#7293#0" expanded="true" />
+                <element signature="e#7292#7293#0" expanded="true" />
+                <element signature="e#13649#14512#0" expanded="true" />
+                <element signature="e#14511#14512#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -87,21 +79,41 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="AuthStatusRxMessage.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/AuthStatusRxMessage.java">
+      <file leaf-file-name="AuthRequestTxMessage.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/AuthRequestTxMessage.java">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="5" column="13" selection-start-line="5" selection-start-column="13" selection-end-line="5" selection-end-column="13" />
+              <caret line="2" column="7" selection-start-line="2" selection-start-column="7" selection-end-line="2" selection-end-column="7" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="AuthRequestTxMessage.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/AuthRequestTxMessage.java">
+      <file leaf-file-name="TransmitterMessage.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/TransmitterMessage.java">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="21" column="56" selection-start-line="21" selection-start-column="56" selection-end-line="21" selection-end-column="56" />
+              <caret line="9" column="34" selection-start-line="9" selection-start-column="34" selection-end-line="9" selection-end-column="34" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="AuthChallengeTxMessage.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/AuthChallengeTxMessage.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="1" column="0" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="AuthChallengeRxMessage.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/AuthChallengeRxMessage.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="7" column="13" selection-start-line="7" selection-start-column="13" selection-end-line="7" selection-end-column="13" />
               <folding />
             </state>
           </provider>
@@ -1744,14 +1756,14 @@
         <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/AuthStatusRxMessage.java" />
         <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/GlucoseTxMessage.java" />
         <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/DisconnectTxMessage.java" />
-        <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/TransmitterMessage.java" />
         <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/Extensions.java" />
         <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/AES.java" />
         <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/AuthChallengeRxMessage.java" />
-        <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/AuthChallengeTxMessage.java" />
         <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/KeepAliveTxMessage.java" />
         <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/BondRequestTxMessage.java" />
+        <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/TransmitterMessage.java" />
         <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/AuthRequestTxMessage.java" />
+        <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/AuthChallengeTxMessage.java" />
         <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/bluetooth/BluetoothManager.java" />
       </list>
     </option>
@@ -2238,9 +2250,11 @@
         <state vertical-scroll-proportion="0.0">
           <caret line="36" column="46" selection-start-line="36" selection-start-column="46" selection-end-line="36" selection-end-column="46" />
           <folding>
-            <element signature="e#1974#2006#0" expanded="true" />
-            <element signature="e#5845#7214#0" expanded="true" />
-            <element signature="e#7213#7214#0" expanded="true" />
+            <element signature="e#2053#2085#0" expanded="true" />
+            <element signature="e#5924#7293#0" expanded="true" />
+            <element signature="e#7292#7293#0" expanded="true" />
+            <element signature="e#13649#14512#0" expanded="true" />
+            <element signature="e#14511#14512#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -2307,9 +2321,11 @@
         <state vertical-scroll-proportion="0.0">
           <caret line="130" column="65" selection-start-line="130" selection-start-column="65" selection-end-line="130" selection-end-column="65" />
           <folding>
-            <element signature="e#1974#2006#0" expanded="true" />
-            <element signature="e#5845#7214#0" expanded="true" />
-            <element signature="e#7213#7214#0" expanded="true" />
+            <element signature="e#2053#2085#0" expanded="true" />
+            <element signature="e#5924#7293#0" expanded="true" />
+            <element signature="e#7292#7293#0" expanded="true" />
+            <element signature="e#13649#14512#0" expanded="true" />
+            <element signature="e#14511#14512#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -2365,9 +2381,11 @@
         <state vertical-scroll-proportion="0.0">
           <caret line="130" column="65" selection-start-line="130" selection-start-column="65" selection-end-line="130" selection-end-column="65" />
           <folding>
-            <element signature="e#1974#2006#0" expanded="true" />
-            <element signature="e#5845#7214#0" expanded="true" />
-            <element signature="e#7213#7214#0" expanded="true" />
+            <element signature="e#2053#2085#0" expanded="true" />
+            <element signature="e#5924#7293#0" expanded="true" />
+            <element signature="e#7292#7293#0" expanded="true" />
+            <element signature="e#13649#14512#0" expanded="true" />
+            <element signature="e#14511#14512#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -2500,42 +2518,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/TransmitterMessage.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="13" column="0" selection-start-line="13" selection-start-column="0" selection-end-line="13" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/Extensions.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="14" column="0" selection-start-line="14" selection-start-column="0" selection-end-line="14" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/DisconnectTxMessage.java">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.16891892">
           <caret line="5" column="59" selection-start-line="5" selection-start-column="59" selection-end-line="5" selection-end-column="59" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/GINcoseWrapper.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="33" column="48" selection-start-line="33" selection-start-column="48" selection-end-line="33" selection-end-column="48" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/KeepAliveTxMessage.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.033783782">
-          <caret line="1" column="0" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
           <folding />
         </state>
       </provider>
@@ -2548,17 +2534,25 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/AuthStatusRxMessage.java">
+    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/Extensions.java">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
+          <caret line="14" column="0" selection-start-line="14" selection-start-column="0" selection-end-line="14" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/AuthStatusRxMessage.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.16968326">
           <caret line="5" column="13" selection-start-line="5" selection-start-column="13" selection-end-line="5" selection-end-column="13" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/AuthChallengeTxMessage.java">
+    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/KeepAliveTxMessage.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
+        <state vertical-scroll-proportion="0.23755656">
           <caret line="7" column="13" selection-start-line="7" selection-start-column="13" selection-end-line="7" selection-end-column="13" />
           <folding />
         </state>
@@ -2566,8 +2560,24 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/AuthChallengeRxMessage.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.23648648">
+        <state vertical-scroll-proportion="0.0">
           <caret line="7" column="13" selection-start-line="7" selection-start-column="13" selection-end-line="7" selection-end-column="13" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/TransmitterMessage.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="9" column="34" selection-start-line="9" selection-start-column="34" selection-end-line="9" selection-end-column="34" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/GINcoseWrapper.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="33" column="48" selection-start-line="33" selection-start-column="48" selection-end-line="33" selection-end-column="48" />
           <folding />
         </state>
       </provider>
@@ -2575,19 +2585,29 @@
     <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/AuthRequestTxMessage.java">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
-          <caret line="21" column="56" selection-start-line="21" selection-start-column="56" selection-end-line="21" selection-end-column="56" />
+          <caret line="2" column="7" selection-start-line="2" selection-start-column="7" selection-end-line="2" selection-end-column="7" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/messages/AuthChallengeTxMessage.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="1" column="0" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/bluetooth/BluetoothManager.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.5927602">
-          <caret line="279" column="29" selection-start-line="279" selection-start-column="29" selection-end-line="279" selection-end-column="29" />
+        <state vertical-scroll-proportion="0.5588235">
+          <caret line="330" column="6" selection-start-line="330" selection-start-column="6" selection-end-line="330" selection-end-column="6" />
           <folding>
-            <element signature="e#1974#2006#0" expanded="true" />
-            <element signature="e#5845#7214#0" expanded="true" />
-            <element signature="e#7213#7214#0" expanded="true" />
+            <element signature="e#2053#2085#0" expanded="true" />
+            <element signature="e#5924#7293#0" expanded="true" />
+            <element signature="e#7292#7293#0" expanded="true" />
+            <element signature="e#13649#14512#0" expanded="true" />
+            <element signature="e#14511#14512#0" expanded="true" />
           </folding>
         </state>
       </provider>
