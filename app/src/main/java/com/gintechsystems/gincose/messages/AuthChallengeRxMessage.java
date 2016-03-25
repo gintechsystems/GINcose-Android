@@ -1,7 +1,5 @@
 package com.gintechsystems.gincose.messages;
 
-import android.util.Log;
-
 import java.util.Arrays;
 
 /**

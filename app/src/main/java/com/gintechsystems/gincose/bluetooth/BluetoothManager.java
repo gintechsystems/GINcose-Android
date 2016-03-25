@@ -1,12 +1,12 @@
 package com.gintechsystems.gincose.bluetooth;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.BluetoothLeScanner;
@@ -23,15 +23,29 @@ import android.util.Log;
 import com.gintechsystems.gincose.Extensions;
 import com.gintechsystems.gincose.GINcoseWrapper;
 import com.gintechsystems.gincose.messages.AuthChallengeRxMessage;
+import com.gintechsystems.gincose.messages.AuthChallengeTxMessage;
 import com.gintechsystems.gincose.messages.AuthRequestTxMessage;
 import com.gintechsystems.gincose.messages.AuthStatusRxMessage;
 import com.gintechsystems.gincose.messages.BondRequestTxMessage;
+import com.gintechsystems.gincose.messages.KeepAliveTxMessage;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.ShortBufferException;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  * Created by joeginley on 3/16/16.
@@ -178,16 +192,13 @@ public class BluetoothManager {
                     break;
                 case BluetoothProfile.STATE_DISCONNECTED:
                     Log.e("gattCallback", "STATE_DISCONNECTED");
+                    mGatt.close();
+                    mGatt = null;
+                    startScan();
                     break;
                 default:
                     Log.e("gattCallback", "STATE_OTHER");
             }
-        }
-
-        @Override
-        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-            Log.i("CharChange", Arrays.toString(characteristic.getValue()));
-            Log.i("CharChange", Extensions.bytesToHex(characteristic.getValue()));
         }
 
         @Override
@@ -247,26 +258,119 @@ public class BluetoothManager {
                     Log.i("Auth", "Transmitter already authenticated");
                 }
                 else {
+                    if (gincoseWrap.authRequest == null) {
+                        mGatt.setCharacteristicNotification(characteristic, true);
+
+                        gincoseWrap.authRequest = new AuthRequestTxMessage();
+
+                        characteristic.setValue(gincoseWrap.authRequest.byteSequence);
+                        mGatt.writeCharacteristic(characteristic);
+
+                        //Extensions.doSleep(200);
+
+                        mGatt.readCharacteristic(characteristic);
+
+                        return;
+                    }
+
+                    // Auth challenge and token have been retrieved.
                     if (characteristic.getValue()[0] == 0x3) {
                         AuthChallengeRxMessage authChallenge = new AuthChallengeRxMessage(characteristic.getValue());
 
-                        //Log.i("AuthChallenge", Arrays.toString(authChallenge.challenge));
-                        //Log.i("AuthChallenge", Arrays.toString(authChallenge.tokenHash));
+                        if (Arrays.equals(authChallenge.tokenHash, calculateHash(gincoseWrap.authRequest.singleUseToken))) {
+                            Log.e("Auth", "Transmitter failed auth challenge");
+                            return;
+                        }
+
+                        byte[] challengeHash = calculateHash(authChallenge.challenge);
+                        if (challengeHash != null) {
+                            AuthChallengeTxMessage authChallengeTx = new AuthChallengeTxMessage(challengeHash);
+
+                            characteristic.setValue(authChallengeTx.byteSequence);
+                            mGatt.writeCharacteristic(characteristic);
+
+                            //Extensions.doSleep(200);
+
+                            mGatt.readCharacteristic(characteristic);
+                        }
                     }
-                    else {
-                        mGatt.setCharacteristicNotification(characteristic, true);
+                    // New auth after completing challenge. We should see pairing here.
+                    else if (characteristic.getValue()[0] == 0x5) {
+                        gincoseWrap.authStatus = new AuthStatusRxMessage(characteristic.getValue());
 
-                        AuthRequestTxMessage authRequest = new AuthRequestTxMessage();
+                        if (gincoseWrap.authStatus.authenticated != 1) {
+                            Log.e("Auth", "Transmitter rejected auth challenge");
+                        }
 
-                        characteristic.setValue(authRequest.data.array());
-                        mGatt.writeCharacteristic(characteristic);
+                        if (gincoseWrap.authStatus.bonded != 1) {
+                            KeepAliveTxMessage keepAlive = new KeepAliveTxMessage(25);
 
-                        Extensions.doSleep(200);
+                            characteristic.setValue(keepAlive.byteSequence);
+                            mGatt.writeCharacteristic(characteristic);
 
-                        mGatt.readCharacteristic(characteristic);
+                            mGatt.readCharacteristic(characteristic);
+
+                            BondRequestTxMessage bondRequest = new BondRequestTxMessage();
+
+                            characteristic.setValue(bondRequest.byteSequence);
+                            mGatt.writeCharacteristic(characteristic);
+
+                            //Extensions.doSleep(200);
+
+                            mGatt.readCharacteristic(characteristic);
+
+                            mGatt.setCharacteristicNotification(characteristic, false);
+                        }
                     }
                 }
             }
         }
     };
+
+    @SuppressLint("GetInstance")
+    private byte[] calculateHash(byte[] data) {
+        if (data.length != 8) {
+            Log.e("Decrypt", "Data length is not equal to 8 bytes.");
+            return  null;
+        }
+
+        byte[] key = cryptKey();
+        if (key == null)
+            return null;
+
+        byte[] doubleData;
+        ByteBuffer bb = ByteBuffer.allocate(16);
+        bb.put(data);
+        bb.put(data);
+
+        doubleData = bb.array();
+
+        Cipher aesCipher;
+        try {
+            aesCipher = Cipher.getInstance("AES/ECB/PKCS7Padding");
+            SecretKeySpec skeySpec = new SecretKeySpec(key, "AES");
+            aesCipher.init(Cipher.ENCRYPT_MODE, skeySpec);
+            byte[] aesBytes = aesCipher.doFinal(doubleData, 0, doubleData.length);
+
+            bb = ByteBuffer.allocate(8);
+            bb.put(aesBytes, 0, 8);
+
+            return bb.array();
+        }
+        catch (NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException | InvalidKeyException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    private byte[] cryptKey() {
+        try {
+            return ("00" + gincoseWrap.defaultTransmitter.transmitterId + "00" + gincoseWrap.defaultTransmitter.transmitterId).getBytes("UTF-8");
+        }
+        catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }

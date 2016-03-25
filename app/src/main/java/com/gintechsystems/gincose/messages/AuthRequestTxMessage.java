@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.gintechsystems.gincose.Extensions;
 
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -17,20 +18,26 @@ public class AuthRequestTxMessage extends TransmitterMessage {
     public byte[] singleUseToken;
     int endByte = 0x2;
 
-    byte[] byteSequence;
-
     public AuthRequestTxMessage() {
+        // Create the singleUseToken from a random UUID.
         UUID uuid = UUID.randomUUID();
-        singleUseToken = uuid.toString().getBytes();
+        try {
+            byte[] uuidBytes = uuid.toString().getBytes("UTF-8");
+
+            ByteBuffer bb = ByteBuffer.allocate(8);
+            bb.put(uuidBytes, 0, 8);
+            singleUseToken = bb.array();
+
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
 
         // Create the byteSequence.
         data = ByteBuffer.allocate(10);
         data.put((byte)opcode);
-        data.put(singleUseToken, 0, 8);
+        data.put(singleUseToken);
         data.put((byte)endByte);
 
         byteSequence = data.array();
-        //Log.i("ByteSequence", Arrays.toString(byteSequence));
-        //Log.i("HexSequence", Extensions.bytesToHex(byteSequence));
     }
 }
