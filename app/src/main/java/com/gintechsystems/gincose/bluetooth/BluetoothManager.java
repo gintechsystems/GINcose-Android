@@ -277,7 +277,7 @@ public class BluetoothManager {
                     if (characteristic.getValue()[0] == 0x3) {
                         AuthChallengeRxMessage authChallenge = new AuthChallengeRxMessage(characteristic.getValue());
 
-                        if (Arrays.equals(authChallenge.tokenHash, calculateHash(gincoseWrap.authRequest.singleUseToken))) {
+                        if (!Arrays.equals(authChallenge.tokenHash, calculateHash(gincoseWrap.authRequest.singleUseToken))) {
                             Log.e("Auth", "Transmitter failed auth challenge");
                             return;
                         }
@@ -330,7 +330,7 @@ public class BluetoothManager {
     @SuppressLint("GetInstance")
     private byte[] calculateHash(byte[] data) {
         if (data.length != 8) {
-            Log.e("Decrypt", "Data length is not equal to 8 bytes.");
+            Log.e("Decrypt", "Data length should be exactly 8.");
             return  null;
         }
 
