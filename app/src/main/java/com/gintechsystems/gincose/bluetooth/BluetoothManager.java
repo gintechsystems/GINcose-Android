@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.BluetoothLeScanner;
@@ -58,6 +59,9 @@ public class BluetoothManager {
         mBluetoothAdapter = mBluetoothManager.getAdapter();
 
         setupBluetooth();
+
+        //Log.i("Bytes", Arrays.toString(Extensions.hexToBytes("01dbbbaa3f742144c702")));
+        //new AuthRequestTxMessage();
     }
 
     public void setupBluetooth() {
@@ -181,6 +185,12 @@ public class BluetoothManager {
         }
 
         @Override
+        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+            Log.i("CharChange", Arrays.toString(characteristic.getValue()));
+            Log.i("CharChange", Extensions.bytesToHex(characteristic.getValue()));
+        }
+
+        @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             BluetoothGattService cgmService = gatt.getService(UUID.fromString(BluetoothServices.CGMService));
             Log.i("onServiceDiscovered", cgmService.getUuid().toString());
@@ -201,25 +211,28 @@ public class BluetoothManager {
 
         @Override
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                /*if (gincoseWrap.authStatus != null) {
-                    if (gincoseWrap.authStatus.authenticated != 1) {
-                        BluetoothGattCharacteristic authCharacteristic = mGatt.getService(UUID.fromString(BluetoothServices.CGMService)).getCharacteristic(UUID.fromString(BluetoothServices.Authentication));
+            Log.i("CharWrite", Arrays.toString(characteristic.getValue()));
+            Log.i("CharWrite", Extensions.bytesToHex(characteristic.getValue()));
 
-                        AuthChallengeRxMessage authChallenge = new AuthChallengeRxMessage(authCharacteristic.getValue());
+            /*if (status == BluetoothGatt.GATT_SUCCESS) {
+                if (gincoseWrap.authStatus != null) {
+                    if (gincoseWrap.authStatus.authenticated != 1) {
+                        AuthChallengeRxMessage authChallenge = new AuthChallengeRxMessage(characteristic.getValue());
+
                         Log.i("AuthChallenge", Arrays.toString(authChallenge.challenge));
                         Log.i("AuthChallenge", Arrays.toString(authChallenge.tokenHash));
                     }
                     else if (gincoseWrap.authStatus.bonded == 5) {
-                        Log.i("CharBytes", Arrays.toString(characteristic.getValue()));
-                        Log.i("CharHex", Extensions.bytesToHex(characteristic.getValue()));
-
-
+                        Log.i("Auth", "Transmitter requires bonding.");
                     }
-                }*/
+                    else {
+                        Log.i("Auth", String.valueOf(gincoseWrap.authStatus.authenticated));
+                        Log.i("Auth", String.valueOf(gincoseWrap.authStatus.bonded));
+                    }
+                }
             }
 
-            mGatt.setCharacteristicNotification(characteristic, false);
+            mGatt.setCharacteristicNotification(characteristic, false);*/
         }
 
         @Override
@@ -229,16 +242,29 @@ public class BluetoothManager {
                 Log.i("CharHex", Extensions.bytesToHex(characteristic.getValue()));
 
                 // Request authentication.
-                AuthStatusRxMessage authStatus = new AuthStatusRxMessage(characteristic.getValue());
-                if (authStatus.authenticated == 1 && authStatus.bonded == 1) {
+                gincoseWrap.authStatus = new AuthStatusRxMessage(characteristic.getValue());
+                if (gincoseWrap.authStatus.authenticated == 1 && gincoseWrap.authStatus.bonded == 1) {
                     Log.i("Auth", "Transmitter already authenticated");
                 }
                 else {
-                    mGatt.setCharacteristicNotification(characteristic, true);
+                    if (characteristic.getValue()[0] == 0x3) {
+                        AuthChallengeRxMessage authChallenge = new AuthChallengeRxMessage(characteristic.getValue());
 
-                    AuthRequestTxMessage authRequest = new AuthRequestTxMessage();
-                    characteristic.setValue(authRequest.data.array());
-                    mGatt.writeCharacteristic(characteristic);
+                        //Log.i("AuthChallenge", Arrays.toString(authChallenge.challenge));
+                        //Log.i("AuthChallenge", Arrays.toString(authChallenge.tokenHash));
+                    }
+                    else {
+                        mGatt.setCharacteristicNotification(characteristic, true);
+
+                        AuthRequestTxMessage authRequest = new AuthRequestTxMessage();
+
+                        characteristic.setValue(authRequest.data.array());
+                        mGatt.writeCharacteristic(characteristic);
+
+                        Extensions.doSleep(200);
+
+                        mGatt.readCharacteristic(characteristic);
+                    }
                 }
             }
         }

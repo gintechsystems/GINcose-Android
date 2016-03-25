@@ -1,6 +1,12 @@
 package com.gintechsystems.gincose.messages;
 
+import android.util.Log;
+
+import com.gintechsystems.gincose.Extensions;
+
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.UUID;
 
 /**
@@ -14,19 +20,17 @@ public class AuthRequestTxMessage extends TransmitterMessage {
     byte[] byteSequence;
 
     public AuthRequestTxMessage() {
-        byte[] uuidBytes = new byte[]{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-
-        UUID newUUID = UUID.nameUUIDFromBytes(uuidBytes);
-        ByteBuffer bb = ByteBuffer.allocate(16).putLong(newUUID.getLeastSignificantBits()).putLong(newUUID.getMostSignificantBits());
-        singleUseToken = bb.array();
+        UUID uuid = UUID.randomUUID();
+        singleUseToken = uuid.toString().getBytes();
 
         // Create the byteSequence.
-        data = ByteBuffer.wrap(new byte[18]);
+        data = ByteBuffer.allocate(10);
         data.put((byte)opcode);
-        data.put(singleUseToken);
+        data.put(singleUseToken, 0, 8);
         data.put((byte)endByte);
 
         byteSequence = data.array();
         //Log.i("ByteSequence", Arrays.toString(byteSequence));
+        //Log.i("HexSequence", Extensions.bytesToHex(byteSequence));
     }
 }

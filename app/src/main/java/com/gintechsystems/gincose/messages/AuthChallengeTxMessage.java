@@ -10,6 +10,6 @@ public class AuthChallengeTxMessage extends TransmitterMessage {
     byte[] challengeHash;
 
     public AuthChallengeTxMessage() {
-        data = ByteBuffer.wrap(new byte[16]).put((byte) opcode).put(challengeHash);
+
     }
 }
