@@ -215,6 +215,12 @@ public class BluetoothManager {
         }
 
         @Override
+        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+            Log.i("CharChange", Arrays.toString(characteristic.getValue()));
+            Log.i("CharChange", Extensions.bytesToHex(characteristic.getValue()));
+        }
+
+        @Override
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             Log.i("CharWrite", Arrays.toString(characteristic.getValue()));
             Log.i("CharWrite", Extensions.bytesToHex(characteristic.getValue()));
