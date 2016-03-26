@@ -29,24 +29,24 @@ import com.gintechsystems.gincose.messages.AuthChallengeTxMessage;
 import com.gintechsystems.gincose.messages.AuthRequestTxMessage;
 import com.gintechsystems.gincose.messages.AuthStatusRxMessage;
 import com.gintechsystems.gincose.messages.BondRequestTxMessage;
+import com.gintechsystems.gincose.messages.GlucoseRxMessage;
+import com.gintechsystems.gincose.messages.UnbondRequestTxMessage;
+import com.gintechsystems.gincose.messages.DisconnectTxMessage;
 import com.gintechsystems.gincose.messages.KeepAliveTxMessage;
 
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
-import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-import javax.crypto.ShortBufferException;
-import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
@@ -75,14 +75,11 @@ public class BluetoothManager {
         mBluetoothAdapter = mBluetoothManager.getAdapter();
 
         setupBluetooth();
-
-        //Log.i("Bytes", Arrays.toString(Extensions.hexToBytes("01dbbbaa3f742144c702")));
-        //new AuthRequestTxMessage();
     }
 
     public void setupBluetooth() {
         if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
-            //First time using the app or bluetooth was turned off?
+            // First time using the app or bluetooth was turned off?
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             gincoseWrap.currentAct.startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
@@ -93,8 +90,8 @@ public class BluetoothManager {
                         .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                         .build();
                 filters = new ArrayList<>();
-                //Only look for CGM.
-                filters.add(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(UUID.fromString(BluetoothServices.Advertisement))).build());
+                // Only look for CGM.
+                filters.add(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(BluetoothServices.Advertisement)).build());
             }
             startScan();
         }
@@ -139,18 +136,6 @@ public class BluetoothManager {
                 }
             }
         }
-
-        @Override
-        public void onBatchScanResults(List<ScanResult> results) {
-            for (ScanResult sr : results) {
-                Log.i("ScanResult - Results", sr.toString());
-            }
-        }
-
-        @Override
-        public void onScanFailed(int errorCode) {
-            Log.e("Scan Failed", "Error Code: " + errorCode);
-        }
     };
 
     private BluetoothAdapter.LeScanCallback mLeScanCallback =
@@ -181,6 +166,9 @@ public class BluetoothManager {
         if (mGatt == null) {
             mGatt = device.connectGatt(gincoseWrap.currentAct, false, gattCallback);
             stopScan();
+
+            // Required when attempting to bond.
+            gincoseWrap.currentAct.registerReceiver(mPairReceiver, new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED));
         }
     }
 
@@ -205,19 +193,23 @@ public class BluetoothManager {
 
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-            BluetoothGattService cgmService = gatt.getService(UUID.fromString(BluetoothServices.CGMService));
+            BluetoothGattService cgmService = gatt.getService(BluetoothServices.CGMService);
             Log.i("onServiceDiscovered", cgmService.getUuid().toString());
 
-            if (gincoseWrap.authStatus != null && gincoseWrap.authStatus.authenticated == 1) {
-                BluetoothGattCharacteristic controlCharacteristic = cgmService.getCharacteristic(UUID.fromString(BluetoothServices.Control));
-                if (!mGatt.readCharacteristic(controlCharacteristic)) {
-                    Log.e("onCharacteristicRead", "ReadCharacteristicError");
-                }
+            gincoseWrap.authCharacteristic = cgmService.getCharacteristic(BluetoothServices.Authentication);
+            gincoseWrap.controlCharacteristic = cgmService.getCharacteristic(BluetoothServices.Control);
+
+            if (gincoseWrap.defaultTransmitter.isModeControl) {
+                mGatt.setCharacteristicNotification(gincoseWrap.controlCharacteristic, true);
+
+                // Control
+                gincoseWrap.defaultTransmitter.control(gatt, gincoseWrap.controlCharacteristic);
             }
             else {
-                BluetoothGattCharacteristic authCharacteristic = cgmService.getCharacteristic(UUID.fromString(BluetoothServices.Authentication));
-                if (!mGatt.readCharacteristic(authCharacteristic)) {
-                    Log.e("onCharacteristicRead", "ReadCharacteristicError");
+                mGatt.setCharacteristicNotification(gincoseWrap.authCharacteristic, true);
+
+                if (!mGatt.readCharacteristic(gincoseWrap.authCharacteristic)) {
+                    Log.e("AuthCharacteristic", "AuthReadError");
                 }
             }
         }
@@ -226,6 +218,18 @@ public class BluetoothManager {
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             Log.i("CharWrite", Arrays.toString(characteristic.getValue()));
             Log.i("CharWrite", Extensions.bytesToHex(characteristic.getValue()));
+
+            if (!gincoseWrap.defaultTransmitter.isModeControl) {
+                // We do not want to read if the written bytes were a unbond / bond request.
+                // Complete the bond process with the callback and then read the characteristic once bonded.
+                if (characteristic.getValue() != null && characteristic.getValue()[0] != 7 && characteristic.getValue()[0] != 6) {
+                    mGatt.readCharacteristic(characteristic);
+                }
+            }
+            else {
+                Log.i("GlucoseData", Arrays.toString(characteristic.getValue()));
+                GlucoseRxMessage glucoseRx = new GlucoseRxMessage(characteristic.getValue());
+            }
         }
 
         @Override
@@ -234,148 +238,44 @@ public class BluetoothManager {
                 Log.i("CharBytes", Arrays.toString(characteristic.getValue()));
                 Log.i("CharHex", Extensions.bytesToHex(characteristic.getValue()));
 
-                // Request authentication.
-                gincoseWrap.authStatus = new AuthStatusRxMessage(characteristic.getValue());
-                if (gincoseWrap.authStatus.authenticated == 1 && gincoseWrap.authStatus.bonded == 1) {
-                    Log.i("Auth", "Transmitter already authenticated");
+                if (!gincoseWrap.defaultTransmitter.isModeControl) {
+                    // Authenticate
+                    gincoseWrap.defaultTransmitter.authenticate(gatt, characteristic);
+                }
+            }
+        }
+    };
+
+    private final BroadcastReceiver mPairReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+
+            if (BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(action)) {
+                final int state = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.ERROR);
+                //final int prevState = intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE, BluetoothDevice.ERROR);
+
+                if (state == BluetoothDevice.BOND_BONDED) {
+                    Log.i("BondProcess", "Paired");
+
+                    if (mGatt.getDevice().getName() != null) {
+                        gincoseWrap.showPermissionToast(gincoseWrap.currentAct, "Transmitter found, paired with " + mGatt.getDevice().getName() + ".");
+                    }
+                    else {
+                        gincoseWrap.showPermissionToast(gincoseWrap.currentAct, "Transmitter found & paired.");
+                    }
+
+                    // The device is paired, read the auth once more.
+                    mGatt.readCharacteristic(gincoseWrap.authCharacteristic);
+
+                    gincoseWrap.currentAct.unregisterReceiver(this);
+                }
+                else if (state == BluetoothDevice.BOND_BONDING) {
+                    Log.i("BondProcess", "Bonding");
                 }
                 else {
-                    if (gincoseWrap.authRequest == null) {
-                        mGatt.setCharacteristicNotification(characteristic, true);
-
-                        gincoseWrap.authRequest = new AuthRequestTxMessage();
-
-                        characteristic.setValue(gincoseWrap.authRequest.byteSequence);
-                        mGatt.writeCharacteristic(characteristic);
-
-                        //Extensions.doSleep(200);
-
-                        mGatt.readCharacteristic(characteristic);
-
-                        return;
-                    }
-
-                    // Auth challenge and token have been retrieved.
-                    if (characteristic.getValue()[0] == 0x3) {
-                        AuthChallengeRxMessage authChallenge = new AuthChallengeRxMessage(characteristic.getValue());
-
-                        if (!Arrays.equals(authChallenge.tokenHash, calculateHash(gincoseWrap.authRequest.singleUseToken))) {
-                            Log.d("Auth", Extensions.bytesToHex(authChallenge.tokenHash));
-                            Log.d("Auth", Extensions.bytesToHex(calculateHash(gincoseWrap.authRequest.singleUseToken)));
-                            Log.e("Auth", "Transmitter failed auth challenge");
-                            return;
-                        }
-
-                        byte[] challengeHash = calculateHash(authChallenge.challenge);
-                        if (challengeHash != null) {
-                            AuthChallengeTxMessage authChallengeTx = new AuthChallengeTxMessage(challengeHash);
-
-                            characteristic.setValue(authChallengeTx.byteSequence);
-                            mGatt.writeCharacteristic(characteristic);
-
-                            //Extensions.doSleep(200);
-
-                            mGatt.readCharacteristic(characteristic);
-                        }
-                    }
-                    // New auth after completing challenge. We should see pairing here.
-                    else if (characteristic.getValue()[0] == 0x5) {
-                        gincoseWrap.authStatus = new AuthStatusRxMessage(characteristic.getValue());
-
-                        if (gincoseWrap.authStatus.authenticated != 1) {
-                            Log.e("Auth", "Transmitter rejected auth challenge");
-                        }
-
-                        if (gincoseWrap.authStatus.bonded != 1) {
-                            KeepAliveTxMessage keepAlive = new KeepAliveTxMessage(25);
-
-                            characteristic.setValue(keepAlive.byteSequence);
-                            mGatt.writeCharacteristic(characteristic);
-
-                            mGatt.readCharacteristic(characteristic);
-
-                            BondRequestTxMessage bondRequest = new BondRequestTxMessage();
-
-                            characteristic.setValue(bondRequest.byteSequence);
-                            mGatt.writeCharacteristic(characteristic);
-
-                            //Extensions.doSleep(200);
-
-                            mGatt.readCharacteristic(characteristic);
-
-                            mGatt.setCharacteristicNotification(characteristic, false);
-                        }
-                    }
+                    Log.i("BondProcess", "Unknown");
                 }
             }
         }
     };
-
-    private BroadcastReceiver mBondingBroadcastReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(final Context context, final Intent intent) {
-            final BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-            final int bondState = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, -1);
-            final int previousBondState = intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE, -1);
-
-            Log.d("BondReceiver", "Bond state changed for: " + device.getAddress() + " new state: " + bondState + " previous: " + previousBondState);
-
-            // skip other devices
-            if (!device.getAddress().equals(mGatt.getDevice().getAddress()))
-                return;
-
-            if (bondState == BluetoothDevice.BOND_BONDED) {
-                gincoseWrap.currentAct.unregisterReceiver(this);
-            }
-        }
-    };
-
-    @SuppressLint("GetInstance")
-    private byte[] calculateHash(byte[] data) {
-        if (data.length != 8) {
-            Log.e("Decrypt", "Data length should be exactly 8.");
-            return  null;
-        }
-
-        byte[] key = cryptKey();
-        if (key == null)
-            return null;
-
-        byte[] doubleData;
-        ByteBuffer bb = ByteBuffer.allocate(16);
-        bb.put(data);
-        bb.put(data);
-
-        doubleData = bb.array();
-
-        Cipher aesCipher;
-        try {
-            aesCipher = Cipher.getInstance("AES/ECB/NoPadding");
-            SecretKeySpec skeySpec = new SecretKeySpec(key, "AES");
-            aesCipher.init(Cipher.ENCRYPT_MODE, skeySpec);
-            byte[] aesBytes = aesCipher.doFinal(doubleData, 0, doubleData.length);
-
-            //Log.d("Crypt", Arrays.toString(aesBytes));
-
-            bb = ByteBuffer.allocate(8);
-            bb.put(aesBytes, 0, 8);
-
-            return bb.array();
-        }
-        catch (NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException | InvalidKeyException e) {
-            e.printStackTrace();
-        }
-
-        return null;
-    }
-
-    private byte[] cryptKey() {
-        try {
-            return ("00" + gincoseWrap.defaultTransmitter.transmitterId + "00" + gincoseWrap.defaultTransmitter.transmitterId).getBytes("UTF-8");
-        }
-        catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
 }

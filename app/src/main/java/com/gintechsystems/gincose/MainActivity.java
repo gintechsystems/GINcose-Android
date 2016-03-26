@@ -28,7 +28,7 @@ public class MainActivity extends Activity {
 
         gincoseWrap.currentAct = this;
 
-        gincoseWrap.defaultTransmitter = new Transmitter("401Y38");
+        gincoseWrap.defaultTransmitter = new Transmitter(this, "401Y38");
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (!gincoseWrap.locationPermission()) {
@@ -51,7 +51,7 @@ public class MainActivity extends Activity {
             btManager.setupBluetooth();
         }
         else {
-            //gincoseWrap.showPermissionToast(this, "Please allow bluetooth services in order to access bluetooth devices.");
+            gincoseWrap.showPermissionToast(this, "Please allow bluetooth services in order to access bluetooth devices.");
         }
     }
 
@@ -66,7 +66,7 @@ public class MainActivity extends Activity {
                         btManager = new BluetoothManager(gincoseWrap);
                     }
                     else {
-                        //gincoseWrap.showPermissionToast(this, "Please allow location services in order to access bluetooth devices.");
+                        gincoseWrap.showPermissionToast(this, "Please allow location services in order to access bluetooth devices.");
                         break;
                     }
                 }

@@ -5,10 +5,10 @@ import java.nio.ByteBuffer;
 /**
  * Created by joeginley on 3/16/16.
  */
-public class BondRequestTxMessage extends TransmitterMessage {
-    byte opcode = 0x7;
+public class UnbondRequestTxMessage extends TransmitterMessage {
+    byte opcode = 0x6;
 
-    public BondRequestTxMessage() {
+    public UnbondRequestTxMessage() {
         data = ByteBuffer.allocate(1);
         data.put(opcode);
 

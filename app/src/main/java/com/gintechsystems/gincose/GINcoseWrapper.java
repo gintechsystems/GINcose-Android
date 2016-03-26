@@ -4,6 +4,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Application;
+import android.bluetooth.BluetoothGattCharacteristic;
 import android.content.pm.PackageManager;
 import android.support.v4.app.ActivityCompat;
 import android.view.Gravity;
@@ -11,6 +12,7 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.gintechsystems.gincose.messages.AuthChallengeTxMessage;
 import com.gintechsystems.gincose.messages.AuthRequestTxMessage;
 import com.gintechsystems.gincose.messages.AuthStatusRxMessage;
 
@@ -25,18 +27,22 @@ public class GINcoseWrapper extends Application {
     public AuthStatusRxMessage authStatus = null;
     public AuthRequestTxMessage authRequest = null;
 
+    public BluetoothGattCharacteristic controlCharacteristic = null;
+    public BluetoothGattCharacteristic authCharacteristic = null;
+
+    // Manually switch this on to unpair a transmitter.
+    public Boolean requestUnbond = false;
+
     @Override
     public void onCreate() {
         super.onCreate();
     }
 
     @SuppressLint("InflateParams")
-    /*public void showPermissionToast(Activity act, String message) {
+    public void showPermissionToast(Activity act, String message) {
         View toastLayout = act.getLayoutInflater().inflate(R.layout.toast_layout, null);
 
         TextView toastText = (TextView)toastLayout.findViewById(R.id.toast_text);
-
-        toastText.setTypeface(gothicFont);
         toastText.setText(message);
 
         Toast toast = new Toast(act);
@@ -44,7 +50,7 @@ public class GINcoseWrapper extends Application {
         toast.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL, 0, 0);
         toast.setDuration(Toast.LENGTH_LONG);
         toast.show();
-    }*/
+    }
 
     public Boolean locationPermission() {
         return ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;

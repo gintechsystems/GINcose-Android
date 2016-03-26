@@ -6,6 +6,10 @@ package com.gintechsystems.gincose;
 public class Extensions {
 
     public static String bytesToHex(byte[] in) {
+        if (in == null) {
+            return null;
+        }
+
         final StringBuilder builder = new StringBuilder();
         for(byte b : in) {
             builder.append(String.format("%02x", b));
@@ -14,6 +18,10 @@ public class Extensions {
     }
 
     public static byte[] hexToBytes(String s) {
+        if (s == null) {
+            return null;
+        }
+
         int len = s.length();
         byte[] data = new byte[len / 2];
         for (int i = 0; i < len; i += 2) {
@@ -23,8 +31,12 @@ public class Extensions {
         return data;
     }
 
-    public static String lastTwoCharactersOfString(String s) {
-        return s.substring(s.length() - 2);
+    public static int byteArrayToInt(byte[] b)
+    {
+        return   b[3] & 0xFF |
+                (b[2] & 0xFF) << 8 |
+                (b[1] & 0xFF) << 16 |
+                (b[0] & 0xFF) << 24;
     }
 
     public static void doSleep(long time) {
@@ -35,4 +47,9 @@ public class Extensions {
         }
     }
 
+    public static String lastTwoCharactersOfString(String s) {
+        return s.substring(s.length() - 2);
+    }
+
 }
+
