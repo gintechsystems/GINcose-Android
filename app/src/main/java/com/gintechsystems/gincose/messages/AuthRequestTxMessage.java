@@ -1,6 +1,8 @@
 package com.gintechsystems.gincose.messages;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.util.UUID;
 
 /**
  * Created by joeginley on 3/16/16.
@@ -13,6 +15,13 @@ public class AuthRequestTxMessage extends TransmitterMessage {
     public AuthRequestTxMessage() {
         // Create the singleUseToken from a 16 byte array.
         byte[] uuidBytes = new byte[]{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        UUID uuid = UUID.nameUUIDFromBytes(uuidBytes);
+
+        try {
+            uuidBytes = uuid.toString().getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
 
         ByteBuffer bb = ByteBuffer.allocate(8);
         bb.put(uuidBytes, 0, 8);

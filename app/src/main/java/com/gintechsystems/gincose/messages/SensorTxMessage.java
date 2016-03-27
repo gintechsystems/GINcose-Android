@@ -8,12 +8,12 @@ import java.nio.ByteBuffer;
  * Created by joeginley on 3/26/16.
  */
 public class SensorTxMessage extends TransmitterMessage {
-    int opcode = 0x2e;
-    byte[] crc = CRC.calculate(ByteBuffer.allocate(4).putInt(opcode).array());
+    byte opcode = 0x2e;
+    byte[] crc = CRC.calculate(opcode);
 
     public SensorTxMessage() {
         data = ByteBuffer.allocate(3);
-        data.put((byte)opcode);
+        data.put(opcode);
         data.put(crc);
         byteSequence = data.array();
     }

@@ -96,14 +96,6 @@ public class Transmitter {
             }
         }
 
-        if (characteristic.getValue()[0] == 8) {
-            Log.i("Auth", "Transmitter not authenticated");
-
-            gincoseWrap.authRequest = new AuthRequestTxMessage();
-            characteristic.setValue(gincoseWrap.authRequest.byteSequence);
-            gatt.writeCharacteristic(characteristic);
-        }
-
         // Auth challenge and token have been retrieved.
         if (characteristic.getValue()[0] == 3) {
             AuthChallengeRxMessage authChallenge = new AuthChallengeRxMessage(characteristic.getValue());
@@ -125,6 +117,16 @@ public class Transmitter {
                 characteristic.setValue(authChallengeTx.byteSequence);
                 gatt.writeCharacteristic(characteristic);
             }
+        }
+        // Init auth.
+        else if (characteristic.getValue()[0] == 8) {
+            if (gincoseWrap.authRequest == null) {
+                Log.i("Auth", "Transmitter not authenticated");
+            }
+
+            gincoseWrap.authRequest = new AuthRequestTxMessage();
+            characteristic.setValue(gincoseWrap.authRequest.byteSequence);
+            gatt.writeCharacteristic(characteristic);
         }
     }
 
@@ -160,7 +162,7 @@ public class Transmitter {
 
         Cipher aesCipher;
         try {
-            aesCipher = Cipher.getInstance("AES/ECB/PKCS7Padding");
+            aesCipher = Cipher.getInstance("AES/ECB/NoPadding");
             SecretKeySpec skeySpec = new SecretKeySpec(key, "AES");
             aesCipher.init(Cipher.ENCRYPT_MODE, skeySpec);
             byte[] aesBytes = aesCipher.doFinal(doubleData, 0, doubleData.length);

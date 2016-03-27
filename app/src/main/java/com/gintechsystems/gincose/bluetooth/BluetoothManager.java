@@ -235,6 +235,7 @@ public class BluetoothManager {
             else {
                 Log.i("GlucoseData", Arrays.toString(characteristic.getValue()));
                 GlucoseRxMessage glucoseRx = new GlucoseRxMessage(characteristic.getValue());
+                Log.i("GlucoseVal", String.valueOf(glucoseRx.glucose));
             }
         }
 
@@ -270,7 +271,7 @@ public class BluetoothManager {
                         gincoseWrap.showPermissionToast(gincoseWrap.currentAct, "Transmitter found & paired.");
                     }
 
-                    // The device is paired, read the auth once more.
+                    // The device is now paired, read the auth once more.
                     mGatt.readCharacteristic(gincoseWrap.authCharacteristic);
 
                     gincoseWrap.currentAct.unregisterReceiver(this);

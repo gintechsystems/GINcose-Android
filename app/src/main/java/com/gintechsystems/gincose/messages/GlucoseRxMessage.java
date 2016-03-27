@@ -1,5 +1,7 @@
 package com.gintechsystems.gincose.messages;
 
+import android.util.Log;
+
 import com.gintechsystems.gincose.CRC;
 import com.gintechsystems.gincose.Extensions;
 
@@ -11,13 +13,13 @@ import java.util.Arrays;
  */
 public class GlucoseRxMessage extends TransmitterMessage {
     byte opcode = 0x31;
-    byte status;
-    byte[] sequence;
-    byte[] timestamp;
-    Boolean glucoseIsDisplayOnly;
-    int glucose;
-    byte state;
-    byte trend;
+    public int status;
+    public byte[] sequence;
+    public byte[] timestamp;
+    public Boolean glucoseIsDisplayOnly;
+    public int glucose;
+    public int state;
+    public int trend;
 
     public GlucoseRxMessage(byte[] data) {
         if (data.length >= 14) {
