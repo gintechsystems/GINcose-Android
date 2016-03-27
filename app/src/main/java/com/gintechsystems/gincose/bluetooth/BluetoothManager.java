@@ -30,6 +30,8 @@ import com.gintechsystems.gincose.messages.AuthRequestTxMessage;
 import com.gintechsystems.gincose.messages.AuthStatusRxMessage;
 import com.gintechsystems.gincose.messages.BondRequestTxMessage;
 import com.gintechsystems.gincose.messages.GlucoseRxMessage;
+import com.gintechsystems.gincose.messages.SensorRxMessage;
+import com.gintechsystems.gincose.messages.SensorTxMessage;
 import com.gintechsystems.gincose.messages.UnbondRequestTxMessage;
 import com.gintechsystems.gincose.messages.DisconnectTxMessage;
 import com.gintechsystems.gincose.messages.KeepAliveTxMessage;
@@ -233,9 +235,19 @@ public class BluetoothManager {
                 }
             }
             else {
-                Log.i("GlucoseData", Arrays.toString(characteristic.getValue()));
-                GlucoseRxMessage glucoseRx = new GlucoseRxMessage(characteristic.getValue());
-                Log.i("GlucoseVal", String.valueOf(glucoseRx.glucose));
+                // Control
+                if (characteristic.getValue()[0] == 3) {
+                    GlucoseRxMessage glucoseRx = new GlucoseRxMessage(characteristic.getValue());
+                    Log.i("GlucoseVal", String.valueOf(glucoseRx.glucose));
+
+                    SensorTxMessage sensorTx = new SensorTxMessage();
+                    characteristic.setValue(sensorTx.byteSequence);
+                    gatt.writeCharacteristic(characteristic);
+                }
+                else if (characteristic.getValue()[0] == 2) {
+                    SensorRxMessage sensorRx = new SensorRxMessage(characteristic.getValue());
+                    Log.i("GlucoseVal", String.valueOf(sensorRx.status));
+                }
             }
         }
 

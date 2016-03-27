@@ -7,10 +7,10 @@ import java.util.Arrays;
  */
 public class SensorRxMessage extends TransmitterMessage {
     byte opcode = 0x2f;
-    int status;
-    byte[] timestamp;
-    byte[] unfiltered;
-    byte[] filtered;
+    public int status;
+    public byte[] timestamp;
+    public byte[] unfiltered;
+    public byte[] filtered;
 
     public SensorRxMessage(byte[] data) {
         if (data.length >= 14) {

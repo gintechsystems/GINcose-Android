@@ -16,6 +16,7 @@ import com.gintechsystems.gincose.messages.DisconnectTxMessage;
 import com.gintechsystems.gincose.messages.GlucoseRxMessage;
 import com.gintechsystems.gincose.messages.GlucoseTxMessage;
 import com.gintechsystems.gincose.messages.KeepAliveTxMessage;
+import com.gintechsystems.gincose.messages.SensorTxMessage;
 import com.gintechsystems.gincose.messages.UnbondRequestTxMessage;
 
 import java.io.UnsupportedEncodingException;
