@@ -13,8 +13,8 @@ public class KeepAliveTxMessage extends TransmitterMessage {
     public KeepAliveTxMessage(int time) {
         this.time = time;
 
-        data = ByteBuffer.allocate(2);
+        data = ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN);
         data.put(new byte[]{ opcode, (byte)this.time });
-        byteSequence = data.order(ByteOrder.LITTLE_ENDIAN).array();
+        byteSequence = data.array();
     }
 }

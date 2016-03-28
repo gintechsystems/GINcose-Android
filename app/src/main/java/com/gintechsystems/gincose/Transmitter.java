@@ -4,9 +4,11 @@ import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.content.Context;
 import android.util.Log;
 
+import com.gintechsystems.gincose.bluetooth.BluetoothServices;
 import com.gintechsystems.gincose.messages.AuthChallengeRxMessage;
 import com.gintechsystems.gincose.messages.AuthChallengeTxMessage;
 import com.gintechsystems.gincose.messages.AuthRequestTxMessage;
@@ -17,6 +19,7 @@ import com.gintechsystems.gincose.messages.GlucoseRxMessage;
 import com.gintechsystems.gincose.messages.GlucoseTxMessage;
 import com.gintechsystems.gincose.messages.KeepAliveTxMessage;
 import com.gintechsystems.gincose.messages.SensorTxMessage;
+import com.gintechsystems.gincose.messages.TransmitterTimeTxMessage;
 import com.gintechsystems.gincose.messages.UnbondRequestTxMessage;
 
 import java.io.UnsupportedEncodingException;
@@ -36,53 +39,50 @@ import javax.crypto.spec.SecretKeySpec;
  * Created by joeginley on 3/19/16.
  */
 public class Transmitter {
-    private GINcoseWrapper gincoseWrap;
-
-    public String transmitterId = "";
+    public String transmitterId;
 
     public Boolean isModeControl = false;
+    public Boolean isModeCommunication = false;
 
-    public Transmitter(Context c) {
-        gincoseWrap = (GINcoseWrapper)c.getApplicationContext();
-    }
+    public Transmitter() {}
 
-    public Transmitter(Context c, String id) {
-        gincoseWrap = (GINcoseWrapper)c.getApplicationContext();
-
+    public Transmitter(String id) {
         transmitterId = id;
     }
 
     public void authenticate(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-        if (characteristic.getValue()[0] == 5 || characteristic.getValue()[0] < 0 ) {
-            gincoseWrap.authStatus = new AuthStatusRxMessage(characteristic.getValue());
-            if (gincoseWrap.authStatus.authenticated == 1 && gincoseWrap.authStatus.bonded == 1) {
+        byte firstByte = characteristic.getValue()[0];
+
+        if (firstByte == 0x5 || firstByte < 0) {
+            GINcoseWrapper.getSharedInstance().authStatus = new AuthStatusRxMessage(characteristic.getValue());
+            if (GINcoseWrapper.getSharedInstance().authStatus.authenticated == 1 && GINcoseWrapper.getSharedInstance().authStatus.bonded == 1) {
                 Log.i("Auth", "Transmitter already authenticated");
 
-                if (gincoseWrap.requestUnbond) {
-                    UnbondRequestTxMessage debondRequest = new UnbondRequestTxMessage();
-                    characteristic.setValue(debondRequest.byteSequence);
+                if (GINcoseWrapper.getSharedInstance().requestUnbond) {
+                    UnbondRequestTxMessage unbondRequest = new UnbondRequestTxMessage();
+                    characteristic.setValue(unbondRequest.byteSequence);
                     gatt.writeCharacteristic(characteristic);
 
                     unpairDevice(gatt.getDevice());
 
-                    gincoseWrap.requestUnbond = false;
+                    GINcoseWrapper.getSharedInstance().requestUnbond = false;
                 }
 
-                gatt.setCharacteristicNotification(gincoseWrap.authCharacteristic, false);
+                gatt.setCharacteristicNotification(GINcoseWrapper.getSharedInstance().authCharacteristic, false);
 
                 // Looks like we are authenticated and bonded, read the control characteristics.
                 control(gatt, characteristic);
                 return;
             }
-            else if (gincoseWrap.authStatus.authenticated == 1 && gincoseWrap.authStatus.bonded == 2) {
+            else if (GINcoseWrapper.getSharedInstance().authStatus.authenticated == 1 && GINcoseWrapper.getSharedInstance().authStatus.bonded == 2) {
                 Log.i("Auth", "Transmitter authenticated, requesting bond");
 
-                KeepAliveTxMessage keepAlive = new KeepAliveTxMessage(25);
-                characteristic.setValue(keepAlive.byteSequence);
+                KeepAliveTxMessage keepAliveTx = new KeepAliveTxMessage(25);
+                characteristic.setValue(keepAliveTx.byteSequence);
                 gatt.writeCharacteristic(characteristic);
 
-                BondRequestTxMessage bondRequest = new BondRequestTxMessage();
-                characteristic.setValue(bondRequest.byteSequence);
+                BondRequestTxMessage bondRequestTx = new BondRequestTxMessage();
+                characteristic.setValue(bondRequestTx.byteSequence);
                 gatt.writeCharacteristic(characteristic);
 
                 // If we don't call this the device does not officially get paired!
@@ -91,23 +91,23 @@ public class Transmitter {
             else {
                 Log.i("Auth", "Transmitter not authenticated");
 
-                gincoseWrap.authRequest = new AuthRequestTxMessage();
-                characteristic.setValue(gincoseWrap.authRequest.byteSequence);
+                GINcoseWrapper.getSharedInstance().authRequest = new AuthRequestTxMessage();
+                characteristic.setValue(GINcoseWrapper.getSharedInstance().authRequest.byteSequence);
                 gatt.writeCharacteristic(characteristic);
             }
         }
 
         // Auth challenge and token have been retrieved.
-        if (characteristic.getValue()[0] == 3) {
+        if (firstByte == 0x3) {
             AuthChallengeRxMessage authChallenge = new AuthChallengeRxMessage(characteristic.getValue());
-            if (gincoseWrap.authRequest == null) {
-                gincoseWrap.authRequest = new AuthRequestTxMessage();
+            if (GINcoseWrapper.getSharedInstance().authRequest == null) {
+                GINcoseWrapper.getSharedInstance().authRequest = new AuthRequestTxMessage();
                 return;
             }
 
-            if (!Arrays.equals(authChallenge.tokenHash, calculateHash(gincoseWrap.authRequest.singleUseToken))) {
+            if (!Arrays.equals(authChallenge.tokenHash, calculateHash(GINcoseWrapper.getSharedInstance().authRequest.singleUseToken))) {
                 Log.i("tokenHash", Arrays.toString(authChallenge.tokenHash));
-                Log.i("singleUseToken", Arrays.toString(calculateHash(gincoseWrap.authRequest.singleUseToken)));
+                Log.i("singleUseToken", Arrays.toString(calculateHash(GINcoseWrapper.getSharedInstance().authRequest.singleUseToken)));
                 Log.e("Auth", "Transmitter failed auth challenge");
             }
 
@@ -120,13 +120,13 @@ public class Transmitter {
             }
         }
         // Init auth.
-        else if (characteristic.getValue()[0] == 8) {
-            if (gincoseWrap.authRequest == null) {
+        else if (firstByte == 0x8) {
+            if (GINcoseWrapper.getSharedInstance().authRequest == null) {
                 Log.i("Auth", "Transmitter not authenticated");
             }
 
-            gincoseWrap.authRequest = new AuthRequestTxMessage();
-            characteristic.setValue(gincoseWrap.authRequest.byteSequence);
+            GINcoseWrapper.getSharedInstance().authRequest = new AuthRequestTxMessage();
+            characteristic.setValue(GINcoseWrapper.getSharedInstance().authRequest.byteSequence);
             gatt.writeCharacteristic(characteristic);
         }
     }
@@ -135,11 +135,15 @@ public class Transmitter {
         if (!isModeControl) {
             isModeControl = true;
 
-            gatt.setCharacteristicNotification(gincoseWrap.controlCharacteristic, true);
+            gatt.setCharacteristicNotification(GINcoseWrapper.getSharedInstance().controlCharacteristic, true);
+
+            BluetoothGattDescriptor descriptor = GINcoseWrapper.getSharedInstance().controlCharacteristic.getDescriptor(BluetoothServices.CharacteristicUpdateNotification);
+            descriptor.setValue(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE);
+            gatt.writeDescriptor(descriptor);
         }
 
-        GlucoseTxMessage glucoseTx = new GlucoseTxMessage();
-        characteristic.setValue(glucoseTx.byteSequence);
+        TransmitterTimeTxMessage timeTx = new TransmitterTimeTxMessage();
+        characteristic.setValue(timeTx.byteSequence);
         gatt.writeCharacteristic(characteristic);
     }
 
@@ -182,7 +186,7 @@ public class Transmitter {
 
     private byte[] cryptKey() {
         try {
-            return ("00" + gincoseWrap.defaultTransmitter.transmitterId + "00" + gincoseWrap.defaultTransmitter.transmitterId).getBytes("UTF-8");
+            return ("00" + GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterId + "00" + GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterId).getBytes("UTF-8");
         }
         catch (UnsupportedEncodingException e) {
             e.printStackTrace();

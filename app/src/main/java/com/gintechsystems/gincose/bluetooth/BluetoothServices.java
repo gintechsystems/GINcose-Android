@@ -28,4 +28,7 @@ public class BluetoothServices {
     public static final UUID CharacteristicE = UUID.fromString("F8084533-849E-531C-C594-30F1F86A4EA5");
     public static final UUID CharacteristicF = UUID.fromString("F8084534-849E-531C-C594-30F1F86A4EA5");
 
+    //CharacteristicDescriptorUUID
+    public static final UUID CharacteristicUpdateNotification = UUID.fromString("00002902-0000-1000-8000-00805F9B34FB");
+
 }

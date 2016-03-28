@@ -5,6 +5,8 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Application;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.support.v4.app.ActivityCompat;
 import android.view.Gravity;
@@ -12,30 +14,39 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.gintechsystems.gincose.messages.AuthChallengeTxMessage;
 import com.gintechsystems.gincose.messages.AuthRequestTxMessage;
 import com.gintechsystems.gincose.messages.AuthStatusRxMessage;
+import com.gintechsystems.gincose.messages.TransmitterStatus;
 
 /**
  * Created by joeginley on 3/16/16.
  */
 public class GINcoseWrapper extends Application {
-    public Activity currentAct = null;
+    private static GINcoseWrapper singleton;
 
-    public Transmitter defaultTransmitter = null;
+    public Activity currentAct;
 
-    public AuthStatusRxMessage authStatus = null;
-    public AuthRequestTxMessage authRequest = null;
+    public Transmitter defaultTransmitter;
 
-    public BluetoothGattCharacteristic controlCharacteristic = null;
-    public BluetoothGattCharacteristic authCharacteristic = null;
+    public AuthStatusRxMessage authStatus;
+    public AuthRequestTxMessage authRequest;
+
+    public BluetoothGattCharacteristic authCharacteristic;
+    public BluetoothGattCharacteristic controlCharacteristic;
+    public BluetoothGattCharacteristic communicationCharacteristic;
 
     // Manually switch this on to unpair a transmitter.
-    public Boolean requestUnbond = false;
+    public boolean requestUnbond = false;
+
+    // Transmitter start time, required to get the correct timestamps.
+    public long startTimeInterval = -1;
+
+    public TransmitterStatus latestTransmitterStatus = TransmitterStatus.UNKNOWN;
 
     @Override
     public void onCreate() {
         super.onCreate();
+        singleton = this;
     }
 
     @SuppressLint("InflateParams")
@@ -52,7 +63,23 @@ public class GINcoseWrapper extends Application {
         toast.show();
     }
 
+    public static GINcoseWrapper getSharedInstance(){
+        return singleton;
+    }
+
     public Boolean locationPermission() {
         return ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    public void saveTransmitterId(Activity act, String transmitterId) {
+        SharedPreferences defaultPrefs = act.getSharedPreferences("defaultPrefs", Context.MODE_PRIVATE);
+        SharedPreferences.Editor prefsEdit = defaultPrefs.edit();
+        prefsEdit.putString("defaultTransmitterId", transmitterId);
+        prefsEdit.apply();
+    }
+
+    public String getStoredTransmitterId(Activity act) {
+        SharedPreferences defaultPrefs = act.getSharedPreferences("defaultPrefs", Context.MODE_PRIVATE);
+        return defaultPrefs.getString("defaultTransmitterId", null);
     }
 }

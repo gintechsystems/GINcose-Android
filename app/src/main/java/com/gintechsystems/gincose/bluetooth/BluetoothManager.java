@@ -1,12 +1,12 @@
 package com.gintechsystems.gincose.bluetooth;
 
-import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.BluetoothLeScanner;
@@ -24,32 +24,21 @@ import android.util.Log;
 
 import com.gintechsystems.gincose.Extensions;
 import com.gintechsystems.gincose.GINcoseWrapper;
-import com.gintechsystems.gincose.messages.AuthChallengeRxMessage;
-import com.gintechsystems.gincose.messages.AuthChallengeTxMessage;
-import com.gintechsystems.gincose.messages.AuthRequestTxMessage;
-import com.gintechsystems.gincose.messages.AuthStatusRxMessage;
-import com.gintechsystems.gincose.messages.BondRequestTxMessage;
+import com.gintechsystems.gincose.messages.TransmitterStatus;
+import com.gintechsystems.gincose.messages.BatteryRxMessage;
+import com.gintechsystems.gincose.messages.BatteryTxMessage;
 import com.gintechsystems.gincose.messages.GlucoseRxMessage;
+import com.gintechsystems.gincose.messages.GlucoseTxMessage;
 import com.gintechsystems.gincose.messages.SensorRxMessage;
 import com.gintechsystems.gincose.messages.SensorTxMessage;
-import com.gintechsystems.gincose.messages.UnbondRequestTxMessage;
+import com.gintechsystems.gincose.messages.TransmitterTimeRxMessage;
 import com.gintechsystems.gincose.messages.DisconnectTxMessage;
-import com.gintechsystems.gincose.messages.KeepAliveTxMessage;
 
-import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Method;
-import java.nio.ByteBuffer;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
+import org.joda.time.DateTime;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.spec.SecretKeySpec;
 
 /**
  * Created by joeginley on 3/16/16.
@@ -57,8 +46,6 @@ import javax.crypto.spec.SecretKeySpec;
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
 @SuppressWarnings("deprecation")
 public class BluetoothManager {
-
-    private GINcoseWrapper gincoseWrap;
 
     private final static int REQUEST_ENABLE_BT = 1;
 
@@ -70,10 +57,8 @@ public class BluetoothManager {
     private ScanSettings settings;
     private List<ScanFilter> filters;
 
-    public BluetoothManager(GINcoseWrapper c) {
-        gincoseWrap = c;
-
-        mBluetoothManager = (android.bluetooth.BluetoothManager)gincoseWrap.getSystemService(Context.BLUETOOTH_SERVICE);
+    public BluetoothManager() {
+        mBluetoothManager = (android.bluetooth.BluetoothManager) GINcoseWrapper.getSharedInstance().getSystemService(Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = mBluetoothManager.getAdapter();
 
         setupBluetooth();
@@ -83,7 +68,7 @@ public class BluetoothManager {
         if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
             // First time using the app or bluetooth was turned off?
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            gincoseWrap.currentAct.startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+            GINcoseWrapper.getSharedInstance().currentAct.startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
         else {
             if (Build.VERSION.SDK_INT >= 21) {
@@ -129,11 +114,10 @@ public class BluetoothManager {
             // We get the last 2 characters to connect to the correct transmitter if there is more than 1 active or in the room.
             // If they match, connect to the device.
             if (btDevice.getName() != null) {
-                String transmitterIdLastTwo = Extensions.lastTwoCharactersOfString(gincoseWrap.defaultTransmitter.transmitterId);
+                String transmitterIdLastTwo = Extensions.lastTwoCharactersOfString(GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterId);
                 String deviceNameLastTwo = Extensions.lastTwoCharactersOfString(btDevice.getName());
 
-                if (transmitterIdLastTwo.equals(deviceNameLastTwo)) {
-                    //They match, connect to the device.
+                if (transmitterIdLastTwo.toUpperCase().equals(deviceNameLastTwo.toUpperCase())) {
                     connectToDevice(btDevice);
                 }
             }
@@ -144,18 +128,17 @@ public class BluetoothManager {
             new BluetoothAdapter.LeScanCallback() {
                 @Override
                 public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord) {
-                    gincoseWrap.currentAct.runOnUiThread(new Runnable() {
+                    GINcoseWrapper.getSharedInstance().currentAct.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             // Check if the device has a name, the Dexcom transmitter always should. Match it with the transmitter id that was entered.
                             // We get the last 2 characters to connect to the correct transmitter if there is more than 1 active or in the room.
                             // If they match, connect to the device.
                             if (device.getName() != null) {
-                                String transmitterIdLastTwo = Extensions.lastTwoCharactersOfString(gincoseWrap.defaultTransmitter.transmitterId);
+                                String transmitterIdLastTwo = Extensions.lastTwoCharactersOfString(GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterId);
                                 String deviceNameLastTwo = Extensions.lastTwoCharactersOfString(device.getName());
 
-                                if (transmitterIdLastTwo.equals(deviceNameLastTwo)) {
-                                    //They match, connect to the device.
+                                if (transmitterIdLastTwo.toUpperCase().equals(deviceNameLastTwo.toUpperCase())) {
                                     connectToDevice(device);
                                 }
                             }
@@ -166,11 +149,11 @@ public class BluetoothManager {
 
     private void connectToDevice(BluetoothDevice device) {
         if (mGatt == null) {
-            mGatt = device.connectGatt(gincoseWrap.currentAct, false, gattCallback);
+            mGatt = device.connectGatt(GINcoseWrapper.getSharedInstance().currentAct, false, gattCallback);
             stopScan();
 
             // Required when attempting to bond.
-            gincoseWrap.currentAct.registerReceiver(mPairReceiver, new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED));
+            GINcoseWrapper.getSharedInstance().currentAct.registerReceiver(mPairReceiver, new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED));
         }
     }
 
@@ -198,21 +181,36 @@ public class BluetoothManager {
             BluetoothGattService cgmService = gatt.getService(BluetoothServices.CGMService);
             Log.i("onServiceDiscovered", cgmService.getUuid().toString());
 
-            gincoseWrap.authCharacteristic = cgmService.getCharacteristic(BluetoothServices.Authentication);
-            gincoseWrap.controlCharacteristic = cgmService.getCharacteristic(BluetoothServices.Control);
+            GINcoseWrapper.getSharedInstance().authCharacteristic = cgmService.getCharacteristic(BluetoothServices.Authentication);
+            GINcoseWrapper.getSharedInstance().controlCharacteristic = cgmService.getCharacteristic(BluetoothServices.Control);
+            GINcoseWrapper.getSharedInstance().communicationCharacteristic = cgmService.getCharacteristic(BluetoothServices.Communication);
 
-            if (gincoseWrap.defaultTransmitter.isModeControl) {
-                mGatt.setCharacteristicNotification(gincoseWrap.controlCharacteristic, true);
+            if (GINcoseWrapper.getSharedInstance().defaultTransmitter.isModeControl) {
+                gatt.setCharacteristicNotification(GINcoseWrapper.getSharedInstance().controlCharacteristic, true);
+
+                BluetoothGattDescriptor descriptor = GINcoseWrapper.getSharedInstance().controlCharacteristic.getDescriptor(BluetoothServices.CharacteristicUpdateNotification);
+                descriptor.setValue(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE);
+                gatt.writeDescriptor(descriptor);
 
                 // Control
-                gincoseWrap.defaultTransmitter.control(gatt, gincoseWrap.controlCharacteristic);
+                GINcoseWrapper.getSharedInstance().defaultTransmitter.control(gatt, GINcoseWrapper.getSharedInstance().controlCharacteristic);
             }
             else {
-                mGatt.setCharacteristicNotification(gincoseWrap.authCharacteristic, true);
+                gatt.setCharacteristicNotification(GINcoseWrapper.getSharedInstance().authCharacteristic, true);
 
-                if (!mGatt.readCharacteristic(gincoseWrap.authCharacteristic)) {
+                if (!gatt.readCharacteristic(GINcoseWrapper.getSharedInstance().authCharacteristic)) {
                     Log.e("AuthCharacteristic", "AuthReadError");
                 }
+            }
+        }
+
+        @Override
+        public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
+            //Log.i("DescriptWriteBytes", Arrays.toString(descriptor.getCharacteristic().getValue()));
+            //Log.i("DescriptWriteHex", Extensions.bytesToHex(descriptor.getCharacteristic().getValue()));
+
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                gatt.writeCharacteristic(descriptor.getCharacteristic());
             }
         }
 
@@ -220,6 +218,58 @@ public class BluetoothManager {
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             Log.i("CharChange", Arrays.toString(characteristic.getValue()));
             Log.i("CharChange", Extensions.bytesToHex(characteristic.getValue()));
+
+            byte firstByte = characteristic.getValue()[0];
+
+            // Glucose
+            if (firstByte == 0x31) {
+                GlucoseRxMessage glucoseRx = new GlucoseRxMessage(characteristic.getValue());
+                Log.i("GlucoseValue", String.valueOf(glucoseRx.glucose));
+
+                //long newTime = GINcoseWrapper.getSharedInstance().startTimeInterval + glucoseRx.timestamp;
+                //DateTime dt = new DateTime(newTime, DateTimeZone.getDefault());
+                //Log.i("GlucoseDate", dt.toString("yyyy-MM-dd hh:mm:ss"));
+
+                SensorTxMessage sensorTx = new SensorTxMessage();
+                characteristic.setValue(sensorTx.byteSequence);
+                gatt.writeCharacteristic(characteristic);
+            }
+            // Sensor
+            else if (firstByte == 0x2f) {
+                SensorRxMessage sensorRx = new SensorRxMessage(characteristic.getValue());
+
+                //long newTime = GINcoseWrapper.getSharedInstance().startTimeInterval + sensorRx.timestamp;
+                //DateTime dt = new DateTime(newTime, DateTimeZone.getDefault());
+                //Log.i("SensorDate", dt.toString("yyyy-MM-dd hh:mm:ss"));
+
+                BatteryTxMessage batteryTx = new BatteryTxMessage();
+                characteristic.setValue(batteryTx.byteSequence);
+                gatt.writeCharacteristic(characteristic);
+            }
+            // Transmitter Time
+            else if (firstByte == 0x25) {
+                TransmitterTimeRxMessage transmitterTime = new TransmitterTimeRxMessage(characteristic.getValue());
+
+                if (GINcoseWrapper.getSharedInstance().startTimeInterval == -1) {
+                    GINcoseWrapper.getSharedInstance().startTimeInterval = new DateTime().getMillis() - transmitterTime.currentTime;
+                }
+
+                GlucoseTxMessage glucoseTx = new GlucoseTxMessage();
+                characteristic.setValue(glucoseTx.byteSequence);
+                gatt.writeCharacteristic(characteristic);
+            }
+            // Battery
+            else if (firstByte == 0x23) {
+                BatteryRxMessage batteryRx = new BatteryRxMessage(characteristic.getValue());
+                GINcoseWrapper.getSharedInstance().latestTransmitterStatus = TransmitterStatus.getBatteryLevel(batteryRx.battery);
+                //Log.i("TransmitterStatus", GINcoseWrapper.getSharedInstance().latestTransmitterStatus.toString());
+
+                // This will be the last rx message called, so disconnect.
+                doDisconnectMessage(gatt, characteristic);
+            }
+            else {
+                doDisconnectMessage(gatt, characteristic);
+            }
         }
 
         @Override
@@ -227,26 +277,11 @@ public class BluetoothManager {
             Log.i("CharWrite", Arrays.toString(characteristic.getValue()));
             Log.i("CharWrite", Extensions.bytesToHex(characteristic.getValue()));
 
-            if (!gincoseWrap.defaultTransmitter.isModeControl) {
+            if (!GINcoseWrapper.getSharedInstance().defaultTransmitter.isModeControl) {
                 // We do not want to read if the written bytes were a unbond / bond request.
                 // Complete the bond process with the callback and then read the characteristic once bonded.
                 if (characteristic.getValue() != null && characteristic.getValue()[0] != 7 && characteristic.getValue()[0] != 6) {
-                    mGatt.readCharacteristic(characteristic);
-                }
-            }
-            else {
-                // Control
-                if (characteristic.getValue()[0] == 3) {
-                    GlucoseRxMessage glucoseRx = new GlucoseRxMessage(characteristic.getValue());
-                    Log.i("GlucoseVal", String.valueOf(glucoseRx.glucose));
-
-                    SensorTxMessage sensorTx = new SensorTxMessage();
-                    characteristic.setValue(sensorTx.byteSequence);
-                    gatt.writeCharacteristic(characteristic);
-                }
-                else if (characteristic.getValue()[0] == 2) {
-                    SensorRxMessage sensorRx = new SensorRxMessage(characteristic.getValue());
-                    Log.i("GlucoseVal", String.valueOf(sensorRx.status));
+                    gatt.readCharacteristic(characteristic);
                 }
             }
         }
@@ -257,14 +292,15 @@ public class BluetoothManager {
                 Log.i("CharBytes", Arrays.toString(characteristic.getValue()));
                 Log.i("CharHex", Extensions.bytesToHex(characteristic.getValue()));
 
-                if (!gincoseWrap.defaultTransmitter.isModeControl) {
+                if (!GINcoseWrapper.getSharedInstance().defaultTransmitter.isModeControl) {
                     // Authenticate
-                    gincoseWrap.defaultTransmitter.authenticate(gatt, characteristic);
+                    GINcoseWrapper.getSharedInstance().defaultTransmitter.authenticate(gatt, characteristic);
                 }
             }
         }
     };
 
+    //This receiver detects when the bonding state for a bt device has changed.
     private final BroadcastReceiver mPairReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -277,16 +313,16 @@ public class BluetoothManager {
                     Log.i("BondProcess", "Paired");
 
                     if (mGatt.getDevice().getName() != null) {
-                        gincoseWrap.showPermissionToast(gincoseWrap.currentAct, "Transmitter found, paired with " + mGatt.getDevice().getName() + ".");
+                        GINcoseWrapper.getSharedInstance().showPermissionToast(GINcoseWrapper.getSharedInstance().currentAct, "Transmitter found, paired with " + mGatt.getDevice().getName() + ".");
                     }
                     else {
-                        gincoseWrap.showPermissionToast(gincoseWrap.currentAct, "Transmitter found & paired.");
+                        GINcoseWrapper.getSharedInstance().showPermissionToast(GINcoseWrapper.getSharedInstance().currentAct, "Transmitter found & paired.");
                     }
 
                     // The device is now paired, read the auth once more.
-                    mGatt.readCharacteristic(gincoseWrap.authCharacteristic);
+                    mGatt.readCharacteristic(GINcoseWrapper.getSharedInstance().authCharacteristic);
 
-                    gincoseWrap.currentAct.unregisterReceiver(this);
+                    GINcoseWrapper.getSharedInstance().currentAct.unregisterReceiver(this);
                 }
                 else if (state == BluetoothDevice.BOND_BONDING) {
                     Log.i("BondProcess", "Bonding");
@@ -297,4 +333,13 @@ public class BluetoothManager {
             }
         }
     };
+
+    // Sends the disconnect tx message to our bt device.
+    private void doDisconnectMessage(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+        gatt.setCharacteristicNotification(GINcoseWrapper.getSharedInstance().controlCharacteristic, false);
+
+        DisconnectTxMessage disconnectTx = new DisconnectTxMessage();
+        characteristic.setValue(disconnectTx.byteSequence);
+        gatt.writeCharacteristic(characteristic);
+    }
 }

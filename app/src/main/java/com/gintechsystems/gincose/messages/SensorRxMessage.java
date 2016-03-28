@@ -1,5 +1,7 @@
 package com.gintechsystems.gincose.messages;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 
 /**
@@ -7,19 +9,21 @@ import java.util.Arrays;
  */
 public class SensorRxMessage extends TransmitterMessage {
     byte opcode = 0x2f;
-    public int status;
-    public byte[] timestamp;
-    public byte[] unfiltered;
-    public byte[] filtered;
+    public TransmitterStatus status;
+    public int timestamp;
+    public int unfiltered;
+    public int filtered;
 
-    public SensorRxMessage(byte[] data) {
-        if (data.length >= 14) {
-            if (data[0] == opcode) {
-                status = data[1];
-                timestamp = Arrays.copyOfRange(data, 2, 5);
+    public SensorRxMessage(byte[] packet) {
+        if (packet.length >= 14) {
+            if (packet[0] == opcode) {
+                data = ByteBuffer.wrap(packet).order(ByteOrder.LITTLE_ENDIAN);
 
-                unfiltered = Arrays.copyOfRange(data, 6, 9);
-                filtered = Arrays.copyOfRange(data, 10, 13);
+                status = TransmitterStatus.getBatteryLevel(data.get(1));
+                timestamp = data.getInt(2);
+
+                unfiltered = data.getInt(6);
+                filtered = data.getInt(10);
             }
         }
     }

@@ -9,6 +9,11 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.text.InputFilter;
+import android.view.KeyEvent;
+import android.view.View;
+import android.widget.EditText;
+import android.widget.RelativeLayout;
 
 import com.gintechsystems.gincose.bluetooth.BluetoothManager;
 
@@ -16,7 +21,6 @@ import com.gintechsystems.gincose.bluetooth.BluetoothManager;
  * Created by joeginley on 3/13/16.
  */
 public class MainActivity extends Activity {
-    private GINcoseWrapper gincoseWrap;
     private BluetoothManager btManager;
 
     @Override
@@ -24,23 +28,40 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        gincoseWrap = (GINcoseWrapper)getApplicationContext();
+        GINcoseWrapper.getSharedInstance().currentAct = this;
 
-        gincoseWrap.currentAct = this;
+        RelativeLayout mainLayout = (RelativeLayout)findViewById(R.id.activity_main);
+        final EditText transmitterIdBox = (EditText)findViewById(R.id.transmitter_id_box);
 
-        gincoseWrap.defaultTransmitter = new Transmitter(this, "401Y38");
+        transmitterIdBox.setFilters(new InputFilter[]{new InputFilter.AllCaps()});
+        transmitterIdBox.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+                if (event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
+                    // Write transmitter id to preferences and begin scanning for the bt devices.
+                    GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterId = transmitterIdBox.getText().toString();
+                    GINcoseWrapper.getSharedInstance().saveTransmitterId(MainActivity.this, transmitterIdBox.getText().toString());
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (!gincoseWrap.locationPermission()) {
-                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 0);
+                    startBTManager();
+                }
+                return false;
             }
-            else {
-                btManager = new BluetoothManager(gincoseWrap);
-            }
+        });
+
+        // Check if a transmitterId already exists.
+        String storedTransmitterId = GINcoseWrapper.getSharedInstance().getStoredTransmitterId(MainActivity.this);
+        if (storedTransmitterId != null) {
+            transmitterIdBox.setText(storedTransmitterId);
+            GINcoseWrapper.getSharedInstance().defaultTransmitter = new Transmitter(storedTransmitterId);
         }
         else {
-            btManager = new BluetoothManager(gincoseWrap);
+            GINcoseWrapper.getSharedInstance().defaultTransmitter = new Transmitter();
         }
+
+        startBTManager();
+
+        mainLayout.setFocusableInTouchMode(true);
+        mainLayout.requestFocus();
     }
 
     @Override
@@ -51,7 +72,7 @@ public class MainActivity extends Activity {
             btManager.setupBluetooth();
         }
         else {
-            gincoseWrap.showPermissionToast(this, "Please allow bluetooth services in order to access bluetooth devices.");
+            GINcoseWrapper.getSharedInstance().showPermissionToast(this, "Please allow bluetooth services in order to access bluetooth devices.");
         }
     }
 
@@ -63,12 +84,30 @@ public class MainActivity extends Activity {
             for (int i = 0; i < permissions.length; i++) {
                 if (permissions[i].equals(Manifest.permission.ACCESS_FINE_LOCATION)) {
                     if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
-                        btManager = new BluetoothManager(gincoseWrap);
+                        btManager = new BluetoothManager();
                     }
                     else {
-                        gincoseWrap.showPermissionToast(this, "Please allow location services in order to access bluetooth devices.");
+                        GINcoseWrapper.getSharedInstance().showPermissionToast(this, "Please allow location services in order to access bluetooth devices.");
                         break;
                     }
+                }
+            }
+        }
+    }
+
+    private void startBTManager() {
+        if (GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterId != null) {
+            if (btManager == null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (!GINcoseWrapper.getSharedInstance().locationPermission()) {
+                        requestPermissions(new String[]{ Manifest.permission.ACCESS_FINE_LOCATION }, 0);
+                    }
+                    else {
+                        btManager = new BluetoothManager();
+                    }
+                }
+                else {
+                    btManager = new BluetoothManager();
                 }
             }
         }
