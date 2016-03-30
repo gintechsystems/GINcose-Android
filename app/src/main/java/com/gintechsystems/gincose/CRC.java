@@ -5,6 +5,7 @@ package com.gintechsystems.gincose;
  */
 public class CRC {
 
+    // Single byte only CRC
     public static byte[] calculate(byte b) {
         int crcShort = 0;
         crcShort = ((crcShort >>> 8) | (crcShort << 8)) & 0xffff;
@@ -12,6 +13,19 @@ public class CRC {
         crcShort ^= ((crcShort & 0xff) >> 4);
         crcShort ^= (crcShort << 12) & 0xffff;
         crcShort ^= ((crcShort & 0xFF) << 5) & 0xffff;
+        crcShort &= 0xffff;
+        return new byte[] {(byte) (crcShort & 0xff), (byte) ((crcShort >> 8) & 0xff)};
+    }
+
+    public static byte[] calculate(byte[] b) {
+        int crcShort = 0;
+        for (byte aBuff : b) {
+            crcShort = ((crcShort >>> 8) | (crcShort << 8)) & 0xffff;
+            crcShort ^= (aBuff & 0xff);
+            crcShort ^= ((crcShort & 0xff) >> 4);
+            crcShort ^= (crcShort << 12) & 0xffff;
+            crcShort ^= ((crcShort & 0xFF) << 5) & 0xffff;
+        }
         crcShort &= 0xffff;
         return new byte[] {(byte) (crcShort & 0xff), (byte) ((crcShort >> 8) & 0xff)};
     }

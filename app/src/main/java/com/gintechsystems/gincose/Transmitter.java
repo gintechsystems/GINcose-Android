@@ -5,7 +5,6 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
-import android.content.Context;
 import android.util.Log;
 
 import com.gintechsystems.gincose.bluetooth.BluetoothServices;
@@ -14,12 +13,7 @@ import com.gintechsystems.gincose.messages.AuthChallengeTxMessage;
 import com.gintechsystems.gincose.messages.AuthRequestTxMessage;
 import com.gintechsystems.gincose.messages.AuthStatusRxMessage;
 import com.gintechsystems.gincose.messages.BondRequestTxMessage;
-import com.gintechsystems.gincose.messages.CalibrationTxMessage;
-import com.gintechsystems.gincose.messages.DisconnectTxMessage;
-import com.gintechsystems.gincose.messages.GlucoseRxMessage;
-import com.gintechsystems.gincose.messages.GlucoseTxMessage;
 import com.gintechsystems.gincose.messages.KeepAliveTxMessage;
-import com.gintechsystems.gincose.messages.SensorTxMessage;
 import com.gintechsystems.gincose.messages.TransmitterTimeTxMessage;
 import com.gintechsystems.gincose.messages.UnbondRequestTxMessage;
 

@@ -24,8 +24,10 @@ import android.util.Log;
 
 import com.gintechsystems.gincose.Extensions;
 import com.gintechsystems.gincose.GINcoseWrapper;
-import com.gintechsystems.gincose.messages.CalibrationRxMessage;
-import com.gintechsystems.gincose.messages.CalibrationTxMessage;
+import com.gintechsystems.gincose.messages.CalibrateGlucoseRxMessage;
+import com.gintechsystems.gincose.messages.CalibrateGlucoseTxMessage;
+import com.gintechsystems.gincose.messages.FirmwareVersionRxMessage;
+import com.gintechsystems.gincose.messages.FirmwareVersionTxMessage;
 import com.gintechsystems.gincose.messages.TransmitterStatus;
 import com.gintechsystems.gincose.messages.BatteryRxMessage;
 import com.gintechsystems.gincose.messages.BatteryTxMessage;
@@ -41,11 +43,7 @@ import org.joda.time.DateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by joeginley on 3/16/16.
@@ -231,14 +229,14 @@ public class BluetoothManager {
                     GINcoseWrapper.getSharedInstance().latestTransmitterStatus = TransmitterStatus.getBatteryLevel(batteryRx.battery);
                     //Log.i("TransmitterStatus", GINcoseWrapper.getSharedInstance().latestTransmitterStatus.toString());
 
-                    CalibrationTxMessage calibrationTx = new CalibrationTxMessage();
-                    characteristic.setValue(calibrationTx.byteSequence);
+                    FirmwareVersionTxMessage firmwareTx = new FirmwareVersionTxMessage();
+                    characteristic.setValue(firmwareTx.byteSequence);
                     gatt.writeCharacteristic(characteristic);
                 }
-                else if (firstByte == 0x35) {
-                    CalibrationRxMessage calibrationRx = new CalibrationRxMessage(characteristic.getValue());
-
-
+                // Firmware
+                else if (firstByte == 0x1c) {
+                    FirmwareVersionRxMessage firmwareRx = new FirmwareVersionRxMessage(characteristic.getValue());
+                    Log.i("FirmwareVersion", String.valueOf(firmwareRx.version));
                 }
                 else {
                     gatt.setCharacteristicNotification(GINcoseWrapper.getSharedInstance().controlCharacteristic, false);
