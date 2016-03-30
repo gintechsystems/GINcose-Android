@@ -24,6 +24,8 @@ import android.util.Log;
 
 import com.gintechsystems.gincose.Extensions;
 import com.gintechsystems.gincose.GINcoseWrapper;
+import com.gintechsystems.gincose.messages.CalibrationRxMessage;
+import com.gintechsystems.gincose.messages.CalibrationTxMessage;
 import com.gintechsystems.gincose.messages.TransmitterStatus;
 import com.gintechsystems.gincose.messages.BatteryRxMessage;
 import com.gintechsystems.gincose.messages.BatteryTxMessage;
@@ -39,17 +41,16 @@ import org.joda.time.DateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * Created by joeginley on 3/16/16.
  */
-@TargetApi(Build.VERSION_CODES.LOLLIPOP)
+@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 @SuppressWarnings("deprecation")
 public class BluetoothManager {
 
-    private final static int REQUEST_ENABLE_BT = 1;
-
-    private android.bluetooth.BluetoothManager mBluetoothManager;
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothLeScanner mLEScanner;
     private BluetoothGatt mGatt;
@@ -57,8 +58,14 @@ public class BluetoothManager {
     private ScanSettings settings;
     private List<ScanFilter> filters;
 
+    // API 18 - 20
+    private ScanCallback mScanCallback;
+
+    // API >= 21
+    private BluetoothAdapter.LeScanCallback mLeScanCallback;
+
     public BluetoothManager() {
-        mBluetoothManager = (android.bluetooth.BluetoothManager) GINcoseWrapper.getSharedInstance().getSystemService(Context.BLUETOOTH_SERVICE);
+        android.bluetooth.BluetoothManager mBluetoothManager = (android.bluetooth.BluetoothManager) GINcoseWrapper.getSharedInstance().getSystemService(Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = mBluetoothManager.getAdapter();
 
         setupBluetooth();
@@ -68,10 +75,10 @@ public class BluetoothManager {
         if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
             // First time using the app or bluetooth was turned off?
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            GINcoseWrapper.getSharedInstance().currentAct.startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+            GINcoseWrapper.getSharedInstance().currentAct.startActivityForResult(enableBtIntent, 0);
         }
         else {
-            if (Build.VERSION.SDK_INT >= 21) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 mLEScanner = mBluetoothAdapter.getBluetoothLeScanner();
                 settings = new ScanSettings.Builder()
                         .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
@@ -86,7 +93,7 @@ public class BluetoothManager {
 
     public void stopScan() {
         if (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled()) {
-            if (Build.VERSION.SDK_INT < 21) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
                 mBluetoothAdapter.stopLeScan(mLeScanCallback);
             }
             else {
@@ -96,56 +103,17 @@ public class BluetoothManager {
     }
 
     public void startScan() {
-        if (Build.VERSION.SDK_INT < 21) {
-            mBluetoothAdapter.startLeScan(mLeScanCallback);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            setupLeScanCallback();
+
+            mBluetoothAdapter.startLeScan(new UUID[]{ BluetoothServices.Advertisement }, mLeScanCallback);
         }
         else {
+            setupScanCallback();
+
             mLEScanner.startScan(filters, settings, mScanCallback);
         }
     }
-
-    private ScanCallback mScanCallback = new ScanCallback() {
-        @Override
-        public void onScanResult(int callbackType, ScanResult result) {
-            Log.i("result", result.toString());
-            BluetoothDevice btDevice = result.getDevice();
-
-            // Check if the device has a name, the Dexcom transmitter always should. Match it with the transmitter id that was entered.
-            // We get the last 2 characters to connect to the correct transmitter if there is more than 1 active or in the room.
-            // If they match, connect to the device.
-            if (btDevice.getName() != null) {
-                String transmitterIdLastTwo = Extensions.lastTwoCharactersOfString(GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterId);
-                String deviceNameLastTwo = Extensions.lastTwoCharactersOfString(btDevice.getName());
-
-                if (transmitterIdLastTwo.toUpperCase().equals(deviceNameLastTwo.toUpperCase())) {
-                    connectToDevice(btDevice);
-                }
-            }
-        }
-    };
-
-    private BluetoothAdapter.LeScanCallback mLeScanCallback =
-            new BluetoothAdapter.LeScanCallback() {
-                @Override
-                public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord) {
-                    GINcoseWrapper.getSharedInstance().currentAct.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            // Check if the device has a name, the Dexcom transmitter always should. Match it with the transmitter id that was entered.
-                            // We get the last 2 characters to connect to the correct transmitter if there is more than 1 active or in the room.
-                            // If they match, connect to the device.
-                            if (device.getName() != null) {
-                                String transmitterIdLastTwo = Extensions.lastTwoCharactersOfString(GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterId);
-                                String deviceNameLastTwo = Extensions.lastTwoCharactersOfString(device.getName());
-
-                                if (transmitterIdLastTwo.toUpperCase().equals(deviceNameLastTwo.toUpperCase())) {
-                                    connectToDevice(device);
-                                }
-                            }
-                        }
-                    });
-                }
-            };
 
     private void connectToDevice(BluetoothDevice device) {
         if (mGatt == null) {
@@ -153,7 +121,10 @@ public class BluetoothManager {
             stopScan();
 
             // Required when attempting to bond.
-            GINcoseWrapper.getSharedInstance().currentAct.registerReceiver(mPairReceiver, new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED));
+            if (!GINcoseWrapper.getSharedInstance().isBondingReceiverRegistered) {
+                GINcoseWrapper.getSharedInstance().currentAct.registerReceiver(mPairReceiver, new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED));
+                GINcoseWrapper.getSharedInstance().isBondingReceiverRegistered = true;
+            }
         }
     }
 
@@ -221,54 +192,64 @@ public class BluetoothManager {
 
             byte firstByte = characteristic.getValue()[0];
 
-            // Glucose
-            if (firstByte == 0x31) {
-                GlucoseRxMessage glucoseRx = new GlucoseRxMessage(characteristic.getValue());
-                Log.i("GlucoseValue", String.valueOf(glucoseRx.glucose));
+            if (GINcoseWrapper.getSharedInstance().defaultTransmitter.isModeControl) {
+                // Glucose
+                if (firstByte == 0x31) {
+                    GlucoseRxMessage glucoseRx = new GlucoseRxMessage(characteristic.getValue());
+                    Log.i("GlucoseValue", String.valueOf(glucoseRx.glucose));
 
-                //long newTime = GINcoseWrapper.getSharedInstance().startTimeInterval + glucoseRx.timestamp;
-                //DateTime dt = new DateTime(newTime, DateTimeZone.getDefault());
-                //Log.i("GlucoseDate", dt.toString("yyyy-MM-dd hh:mm:ss"));
+                    //long newTime = GINcoseWrapper.getSharedInstance().startTimeInterval + glucoseRx.timestamp;
+                    //DateTime dt = new DateTime(newTime, DateTimeZone.getDefault());
+                    //Log.i("GlucoseDate", dt.toString("yyyy-MM-dd hh:mm:ss"));
 
-                SensorTxMessage sensorTx = new SensorTxMessage();
-                characteristic.setValue(sensorTx.byteSequence);
-                gatt.writeCharacteristic(characteristic);
-            }
-            // Sensor
-            else if (firstByte == 0x2f) {
-                SensorRxMessage sensorRx = new SensorRxMessage(characteristic.getValue());
-
-                //long newTime = GINcoseWrapper.getSharedInstance().startTimeInterval + sensorRx.timestamp;
-                //DateTime dt = new DateTime(newTime, DateTimeZone.getDefault());
-                //Log.i("SensorDate", dt.toString("yyyy-MM-dd hh:mm:ss"));
-
-                BatteryTxMessage batteryTx = new BatteryTxMessage();
-                characteristic.setValue(batteryTx.byteSequence);
-                gatt.writeCharacteristic(characteristic);
-            }
-            // Transmitter Time
-            else if (firstByte == 0x25) {
-                TransmitterTimeRxMessage transmitterTime = new TransmitterTimeRxMessage(characteristic.getValue());
-
-                if (GINcoseWrapper.getSharedInstance().startTimeInterval == -1) {
-                    GINcoseWrapper.getSharedInstance().startTimeInterval = new DateTime().getMillis() - transmitterTime.currentTime;
+                    SensorTxMessage sensorTx = new SensorTxMessage();
+                    characteristic.setValue(sensorTx.byteSequence);
+                    gatt.writeCharacteristic(characteristic);
                 }
+                // Sensor
+                else if (firstByte == 0x2f) {
+                    SensorRxMessage sensorRx = new SensorRxMessage(characteristic.getValue());
 
-                GlucoseTxMessage glucoseTx = new GlucoseTxMessage();
-                characteristic.setValue(glucoseTx.byteSequence);
-                gatt.writeCharacteristic(characteristic);
-            }
-            // Battery
-            else if (firstByte == 0x23) {
-                BatteryRxMessage batteryRx = new BatteryRxMessage(characteristic.getValue());
-                GINcoseWrapper.getSharedInstance().latestTransmitterStatus = TransmitterStatus.getBatteryLevel(batteryRx.battery);
-                //Log.i("TransmitterStatus", GINcoseWrapper.getSharedInstance().latestTransmitterStatus.toString());
+                    //long newTime = GINcoseWrapper.getSharedInstance().startTimeInterval + sensorRx.timestamp;
+                    //DateTime dt = new DateTime(newTime, DateTimeZone.getDefault());
+                    //Log.i("SensorDate", dt.toString("yyyy-MM-dd hh:mm:ss"));
 
-                // This will be the last rx message called, so disconnect.
-                doDisconnectMessage(gatt, characteristic);
-            }
-            else {
-                doDisconnectMessage(gatt, characteristic);
+                    BatteryTxMessage batteryTx = new BatteryTxMessage();
+                    characteristic.setValue(batteryTx.byteSequence);
+                    gatt.writeCharacteristic(characteristic);
+                }
+                // Transmitter Time
+                else if (firstByte == 0x25) {
+                    TransmitterTimeRxMessage transmitterTime = new TransmitterTimeRxMessage(characteristic.getValue());
+
+                    if (GINcoseWrapper.getSharedInstance().startTimeInterval == -1) {
+                        GINcoseWrapper.getSharedInstance().startTimeInterval = new DateTime().getMillis() - transmitterTime.currentTime;
+                    }
+
+                    GlucoseTxMessage glucoseTx = new GlucoseTxMessage();
+                    characteristic.setValue(glucoseTx.byteSequence);
+                    gatt.writeCharacteristic(characteristic);
+                }
+                // Battery
+                else if (firstByte == 0x23) {
+                    BatteryRxMessage batteryRx = new BatteryRxMessage(characteristic.getValue());
+                    GINcoseWrapper.getSharedInstance().latestTransmitterStatus = TransmitterStatus.getBatteryLevel(batteryRx.battery);
+                    //Log.i("TransmitterStatus", GINcoseWrapper.getSharedInstance().latestTransmitterStatus.toString());
+
+                    CalibrationTxMessage calibrationTx = new CalibrationTxMessage();
+                    characteristic.setValue(calibrationTx.byteSequence);
+                    gatt.writeCharacteristic(characteristic);
+                }
+                else if (firstByte == 0x35) {
+                    CalibrationRxMessage calibrationRx = new CalibrationRxMessage(characteristic.getValue());
+
+
+                }
+                else {
+                    gatt.setCharacteristicNotification(GINcoseWrapper.getSharedInstance().controlCharacteristic, false);
+
+                    doDisconnectMessage(gatt, characteristic);
+                }
             }
         }
 
@@ -323,6 +304,7 @@ public class BluetoothManager {
                     mGatt.readCharacteristic(GINcoseWrapper.getSharedInstance().authCharacteristic);
 
                     GINcoseWrapper.getSharedInstance().currentAct.unregisterReceiver(this);
+                    GINcoseWrapper.getSharedInstance().isBondingReceiverRegistered = false;
                 }
                 else if (state == BluetoothDevice.BOND_BONDING) {
                     Log.i("BondProcess", "Bonding");
@@ -334,10 +316,59 @@ public class BluetoothManager {
         }
     };
 
+    // API 18 - 20
+    private void setupLeScanCallback() {
+        if (mLeScanCallback == null) {
+            mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
+                @Override
+                public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
+                    // Check if the device has a name, the Dexcom transmitter always should. Match it with the transmitter id that was entered.
+                    // We get the last 2 characters to connect to the correct transmitter if there is more than 1 active or in the room.
+                    // If they match, connect to the device.
+                    if (device.getName() != null) {
+                        String transmitterIdLastTwo = Extensions.lastTwoCharactersOfString(GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterId);
+                        String deviceNameLastTwo = Extensions.lastTwoCharactersOfString(device.getName());
+
+                        if (transmitterIdLastTwo.toUpperCase().equals(deviceNameLastTwo.toUpperCase())) {
+                            connectToDevice(device);
+                        }
+                    }
+                }
+            };
+        }
+    }
+
+    // API >= 21 - There are 2 API checks because toString() cries about it.
+    private void setupScanCallback() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            if (mScanCallback == null) {
+                mScanCallback = new ScanCallback() {
+                    @Override
+                    public void onScanResult(int callbackType, ScanResult result) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            Log.i("result", result.toString());
+                            BluetoothDevice btDevice = result.getDevice();
+
+                            // Check if the device has a name, the Dexcom transmitter always should. Match it with the transmitter id that was entered.
+                            // We get the last 2 characters to connect to the correct transmitter if there is more than 1 active or in the room.
+                            // If they match, connect to the device.
+                            if (btDevice.getName() != null) {
+                                String transmitterIdLastTwo = Extensions.lastTwoCharactersOfString(GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterId);
+                                String deviceNameLastTwo = Extensions.lastTwoCharactersOfString(btDevice.getName());
+
+                                if (transmitterIdLastTwo.toUpperCase().equals(deviceNameLastTwo.toUpperCase())) {
+                                    connectToDevice(btDevice);
+                                }
+                            }
+                        }
+                    }
+                };
+            }
+        }
+    }
+
     // Sends the disconnect tx message to our bt device.
     private void doDisconnectMessage(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-        gatt.setCharacteristicNotification(GINcoseWrapper.getSharedInstance().controlCharacteristic, false);
-
         DisconnectTxMessage disconnectTx = new DisconnectTxMessage();
         characteristic.setValue(disconnectTx.byteSequence);
         gatt.writeCharacteristic(characteristic);

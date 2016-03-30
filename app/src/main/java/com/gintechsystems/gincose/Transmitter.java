@@ -14,6 +14,7 @@ import com.gintechsystems.gincose.messages.AuthChallengeTxMessage;
 import com.gintechsystems.gincose.messages.AuthRequestTxMessage;
 import com.gintechsystems.gincose.messages.AuthStatusRxMessage;
 import com.gintechsystems.gincose.messages.BondRequestTxMessage;
+import com.gintechsystems.gincose.messages.CalibrationTxMessage;
 import com.gintechsystems.gincose.messages.DisconnectTxMessage;
 import com.gintechsystems.gincose.messages.GlucoseRxMessage;
 import com.gintechsystems.gincose.messages.GlucoseTxMessage;
@@ -145,6 +146,19 @@ public class Transmitter {
         TransmitterTimeTxMessage timeTx = new TransmitterTimeTxMessage();
         characteristic.setValue(timeTx.byteSequence);
         gatt.writeCharacteristic(characteristic);
+    }
+
+    public void communicate(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+        if (!isModeCommunication) {
+            isModeCommunication = true;
+            isModeControl = false;
+
+            gatt.setCharacteristicNotification(GINcoseWrapper.getSharedInstance().communicationCharacteristic, true);
+
+            BluetoothGattDescriptor descriptor = GINcoseWrapper.getSharedInstance().communicationCharacteristic.getDescriptor(BluetoothServices.CharacteristicUpdateNotification);
+            descriptor.setValue(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE);
+            gatt.writeDescriptor(descriptor);
+        }
     }
 
     @SuppressLint("GetInstance")

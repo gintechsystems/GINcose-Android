@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.text.InputFilter;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.EditText;
@@ -42,6 +43,8 @@ public class MainActivity extends Activity {
                     GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterId = transmitterIdBox.getText().toString();
                     GINcoseWrapper.getSharedInstance().saveTransmitterId(MainActivity.this, transmitterIdBox.getText().toString());
 
+                    Log.i("Transmitter", String.format("The TransmitterId has been updated to %s", GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterId));
+
                     startBTManager();
                 }
                 return false;
@@ -68,11 +71,14 @@ public class MainActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (resultCode == Activity.RESULT_OK) {
-            btManager.setupBluetooth();
-        }
-        else {
-            GINcoseWrapper.getSharedInstance().showPermissionToast(this, "Please allow bluetooth services in order to access bluetooth devices.");
+        // BT Request
+        if (requestCode == 0) {
+            if (resultCode == Activity.RESULT_OK) {
+                btManager.setupBluetooth();
+            }
+            else {
+                GINcoseWrapper.getSharedInstance().showPermissionToast(this, "Please allow bluetooth services in order to access bluetooth devices.");
+            }
         }
     }
 
@@ -84,7 +90,7 @@ public class MainActivity extends Activity {
             for (int i = 0; i < permissions.length; i++) {
                 if (permissions[i].equals(Manifest.permission.ACCESS_FINE_LOCATION)) {
                     if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
-                        btManager = new BluetoothManager();
+                       startBTManager();
                     }
                     else {
                         GINcoseWrapper.getSharedInstance().showPermissionToast(this, "Please allow location services in order to access bluetooth devices.");

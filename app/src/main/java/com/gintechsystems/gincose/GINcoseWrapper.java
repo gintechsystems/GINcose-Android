@@ -38,6 +38,9 @@ public class GINcoseWrapper extends Application {
     // Manually switch this on to unpair a transmitter.
     public boolean requestUnbond = false;
 
+    // Boolean for bonding receiver.
+    public boolean isBondingReceiverRegistered = false;
+
     // Transmitter start time, required to get the correct timestamps.
     public long startTimeInterval = -1;
 

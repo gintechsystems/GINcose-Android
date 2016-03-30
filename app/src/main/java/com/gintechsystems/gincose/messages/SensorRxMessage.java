@@ -2,7 +2,6 @@ package com.gintechsystems.gincose.messages;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Arrays;
 
 /**
  * Created by joeginley on 3/26/16.

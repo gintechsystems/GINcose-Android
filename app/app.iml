@@ -90,8 +90,8 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="ReLinker-1.1" level="project" />
     <orderEntry type="library" exported="" name="support-v4-23.2.1" level="project" />
-    <orderEntry type="library" exported="" name="MPAndroidChart-v2.2.3" level="project" />
     <orderEntry type="library" exported="" name="realm-annotations-0.88.0" level="project" />
+    <orderEntry type="library" exported="" name="MPAndroidChart-v2.2.3" level="project" />
     <orderEntry type="library" exported="" name="realm-android-library-0.88.0" level="project" />
     <orderEntry type="library" exported="" name="joda-time-2.9.2" level="project" />
     <orderEntry type="library" exported="" name="support-annotations-23.2.1" level="project" />
