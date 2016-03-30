@@ -43,6 +43,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by joeginley on 3/16/16.
@@ -84,13 +87,11 @@ public class BluetoothManager {
     }
 
     public void stopScan() {
-        if (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled()) {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-                mBluetoothAdapter.stopLeScan(mLeScanCallback);
-            }
-            else {
-                mLEScanner.stopScan(mScanCallback);
-            }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            mBluetoothAdapter.stopLeScan(mLeScanCallback);
+        }
+        else {
+            mLEScanner.stopScan(mScanCallback);
         }
     }
 
@@ -255,7 +256,7 @@ public class BluetoothManager {
             if (!GINcoseWrapper.getSharedInstance().defaultTransmitter.isModeControl) {
                 // We do not want to read if the written bytes were a unbond / bond request.
                 // Complete the bond process with the callback and then read the characteristic once bonded.
-                if (characteristic.getValue() != null && characteristic.getValue()[0] != 7 && characteristic.getValue()[0] != 6) {
+                if (characteristic.getValue() != null && characteristic.getValue()[0] != 0x7 && characteristic.getValue()[0] != 0x6) {
                     gatt.readCharacteristic(characteristic);
                 }
             }
@@ -311,6 +312,7 @@ public class BluetoothManager {
     };
 
     // API 18 - 20
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     private void setupLeScanCallback() {
         if (mLeScanCallback == null) {
             mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
@@ -333,48 +335,44 @@ public class BluetoothManager {
     }
 
     // API >= 21 - There are 2 API checks because toString() cries about it.
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private void setupScanCallback() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            if (mScanCallback == null) {
-                mScanCallback = new ScanCallback() {
-                    @Override
-                    public void onScanResult(int callbackType, ScanResult result) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                            Log.i("result", result.toString());
-                            BluetoothDevice btDevice = result.getDevice();
+        if (mScanCallback == null) {
+            mScanCallback = new ScanCallback() {
+                @Override
+                public void onScanResult(int callbackType, ScanResult result) {
+                    Log.i("result", result.toString());
+                    BluetoothDevice btDevice = result.getDevice();
 
-                            // Check if the device has a name, the Dexcom transmitter always should. Match it with the transmitter id that was entered.
-                            // We get the last 2 characters to connect to the correct transmitter if there is more than 1 active or in the room.
-                            // If they match, connect to the device.
-                            if (btDevice.getName() != null) {
-                                String transmitterIdLastTwo = Extensions.lastTwoCharactersOfString(GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterId);
-                                String deviceNameLastTwo = Extensions.lastTwoCharactersOfString(btDevice.getName());
+                    // Check if the device has a name, the Dexcom transmitter always should. Match it with the transmitter id that was entered.
+                    // We get the last 2 characters to connect to the correct transmitter if there is more than 1 active or in the room.
+                    // If they match, connect to the device.
+                    if (btDevice.getName() != null) {
+                        String transmitterIdLastTwo = Extensions.lastTwoCharactersOfString(GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterId);
+                        String deviceNameLastTwo = Extensions.lastTwoCharactersOfString(btDevice.getName());
 
-                                if (transmitterIdLastTwo.toUpperCase().equals(deviceNameLastTwo.toUpperCase())) {
-                                    connectToDevice(btDevice);
-                                }
-                            }
+                        if (transmitterIdLastTwo.toUpperCase().equals(deviceNameLastTwo.toUpperCase())) {
+                            connectToDevice(btDevice);
                         }
                     }
-                };
-            }
+                }
+            };
         }
     }
 
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private void setupSettingsFilters() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            if (mLEScanner == null) {
-                mLEScanner = mBluetoothAdapter.getBluetoothLeScanner();
+        if (mLEScanner == null) {
+            mLEScanner = mBluetoothAdapter.getBluetoothLeScanner();
 
-                settings = new ScanSettings.Builder()
-                        .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-                        .build();
+            settings = new ScanSettings.Builder()
+                    .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                    .build();
 
-                filters = new ArrayList<>();
+            filters = new ArrayList<>();
 
-                // Only look for CGM.
-                filters.add(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(BluetoothServices.Advertisement)).build());
-            }
+            // Only look for CGM.
+            filters.add(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(BluetoothServices.Advertisement)).build());
         }
     }
 

@@ -2,12 +2,14 @@ package com.gintechsystems.gincose;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Application;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.support.v4.app.ActivityCompat;
 import android.view.Gravity;
 import android.view.View;
@@ -84,5 +86,15 @@ public class GINcoseWrapper extends Application {
     public String getStoredTransmitterId(Activity act) {
         SharedPreferences defaultPrefs = act.getSharedPreferences("defaultPrefs", Context.MODE_PRIVATE);
         return defaultPrefs.getString("defaultTransmitterId", null);
+    }
+
+    @SuppressWarnings("deprecation")
+    @TargetApi(Build.VERSION_CODES.M)
+    public int getCompatibleColor(int color) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            return getResources().getColor(color, null);
+        }
+
+        return getResources().getColor(color);
     }
 }

@@ -1,27 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 android:id="@+id/activity_main"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-    <EditText
-        android:id="@+id/transmitter_id_box"
-        android:layout_marginTop="20dp"
-        android:layout_marginLeft="100dp"
-        android:layout_marginRight="100dp"
-        android:paddingLeft="10dp"
-        android:paddingRight="10dp"
+    <RelativeLayout
+        android:id="@+id/drawer_container_layout"
         android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:gravity="center"
-        android:textSize="20sp"
-        style="?android:attr/borderlessButtonStyle"
-        android:background="@color/light_gray"
-        android:maxLines="1"
-        android:lines="1"
-        android:maxLength="6"
-        android:inputType="textNoSuggestions|textVisiblePassword|textCapCharacters"
-        android:hint="@string/transmitter_id_box"
-        android:textColorHint="@color/gray"/>
+        android:layout_height="match_parent">
 
-</RelativeLayout>
+        <EditText
+            android:id="@+id/transmitter_id_box"
+            android:layout_marginTop="20dp"
+            android:layout_marginLeft="100dp"
+            android:layout_marginRight="100dp"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:gravity="center"
+            android:textSize="20sp"
+            android:textCursorDrawable="@null"
+            style="?android:attr/borderlessButtonStyle"
+            android:background="@color/light_gray"
+            android:maxLines="1"
+            android:lines="1"
+            android:maxLength="6"
+            android:inputType="textNoSuggestions|textVisiblePassword|textCapCharacters"
+            android:hint="@string/transmitter_id_box"
+            android:textColorHint="@color/gray"/>
+
+    </RelativeLayout>
+
+    <ListView
+        android:id="@+id/navList"
+        android:layout_width="240dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="left|start"
+        android:background="@color/white" />
+
+</android.support.v4.widget.DrawerLayout>

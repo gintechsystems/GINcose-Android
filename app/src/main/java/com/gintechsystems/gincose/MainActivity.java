@@ -1,19 +1,26 @@
 package com.gintechsystems.gincose;
 
 import android.Manifest;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
 import android.text.InputFilter;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.RelativeLayout;
 
 import com.gintechsystems.gincose.bluetooth.BluetoothManager;
@@ -21,24 +28,42 @@ import com.gintechsystems.gincose.bluetooth.BluetoothManager;
 /**
  * Created by joeginley on 3/13/16.
  */
-public class MainActivity extends Activity {
+public class MainActivity extends AppCompatActivity {
     private BluetoothManager btManager;
+
+    private ListView mDrawerList;
+    private DrawerLayout mDrawerLayout;
+    private ArrayAdapter<String> mAdapter;
+    private ActionBarDrawerToggle mDrawerToggle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         GINcoseWrapper.getSharedInstance().currentAct = this;
 
-        RelativeLayout mainLayout = (RelativeLayout)findViewById(R.id.activity_main);
+        mDrawerLayout = (DrawerLayout)findViewById(R.id.activity_main);
+        mDrawerList = (ListView)findViewById(R.id.navList);
+
+        final RelativeLayout drawerContainerLayout = (RelativeLayout)findViewById(R.id.drawer_container_layout);
         final EditText transmitterIdBox = (EditText)findViewById(R.id.transmitter_id_box);
+
+        // Removes annoying may produce NullPointerException.
+        assert getSupportActionBar() != null;
+        assert drawerContainerLayout != null;
+        assert transmitterIdBox != null;
+
+        setupDrawer();
+        addDrawerItems();
+
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
 
         transmitterIdBox.setFilters(new InputFilter[]{new InputFilter.AllCaps()});
         transmitterIdBox.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {
-                if (event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
+                if (event.getAction() == KeyEvent.ACTION_UP && event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
                     // Write transmitter id to preferences and begin scanning for the bt devices.
                     GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterId = transmitterIdBox.getText().toString();
                     GINcoseWrapper.getSharedInstance().saveTransmitterId(MainActivity.this, transmitterIdBox.getText().toString());
@@ -63,8 +88,32 @@ public class MainActivity extends Activity {
 
         startBTManager();
 
-        mainLayout.setFocusableInTouchMode(true);
-        mainLayout.requestFocus();
+        drawerContainerLayout.setFocusableInTouchMode(true);
+        drawerContainerLayout.requestFocus();
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        mDrawerToggle.syncState();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        mDrawerToggle.onConfigurationChanged(newConfig);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.actionbar_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        //int id = item.getItemId();
+        return mDrawerToggle.onOptionsItemSelected(item) || super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -117,5 +166,36 @@ public class MainActivity extends Activity {
                 }
             }
         }
+    }
+
+    private void setupDrawer() {
+        mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.string.drawer_open, R.string.drawer_close) {
+
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                invalidateOptionsMenu();
+            }
+
+            public void onDrawerClosed(View view) {
+                super.onDrawerClosed(view);
+                invalidateOptionsMenu();
+            }
+        };
+
+        mDrawerToggle.setDrawerIndicatorEnabled(true);
+        mDrawerLayout.addDrawerListener(mDrawerToggle);
+    }
+
+    private void addDrawerItems() {
+        String[] navArray = { "Alerts", "Settings", "Share2" };
+        mAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, navArray);
+        mDrawerList.setAdapter(mAdapter);
+
+        mDrawerList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+            }
+        });
     }
 }

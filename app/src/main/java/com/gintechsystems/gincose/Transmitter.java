@@ -54,7 +54,7 @@ public class Transmitter {
     public void authenticate(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
         byte firstByte = characteristic.getValue()[0];
 
-        if (firstByte == 0x5 || firstByte < 0) {
+        if (firstByte == 0x5 || firstByte <= 0x0) {
             GINcoseWrapper.getSharedInstance().authStatus = new AuthStatusRxMessage(characteristic.getValue());
             if (GINcoseWrapper.getSharedInstance().authStatus.authenticated == 1 && GINcoseWrapper.getSharedInstance().authStatus.bonded == 1) {
                 Log.i("Auth", "Transmitter already authenticated");
@@ -67,11 +67,12 @@ public class Transmitter {
                     unpairDevice(gatt.getDevice());
 
                     GINcoseWrapper.getSharedInstance().requestUnbond = false;
+                    return;
                 }
 
                 gatt.setCharacteristicNotification(GINcoseWrapper.getSharedInstance().authCharacteristic, false);
 
-                // Looks like we are authenticated and bonded, read the control characteristics.
+                // Looks like we are authenticated and bonded, write the control characteristics.
                 control(gatt, characteristic);
                 return;
             }
