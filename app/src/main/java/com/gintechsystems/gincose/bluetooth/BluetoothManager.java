@@ -78,15 +78,7 @@ public class BluetoothManager {
             GINcoseWrapper.getSharedInstance().currentAct.startActivityForResult(enableBtIntent, 0);
         }
         else {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                mLEScanner = mBluetoothAdapter.getBluetoothLeScanner();
-                settings = new ScanSettings.Builder()
-                        .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-                        .build();
-                filters = new ArrayList<>();
-                // Only look for CGM.
-                filters.add(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(BluetoothServices.Advertisement)).build());
-            }
+            // Start scanning!
             startScan();
         }
     }
@@ -110,6 +102,8 @@ public class BluetoothManager {
         }
         else {
             setupScanCallback();
+
+            setupSettingsFilters();
 
             mLEScanner.startScan(filters, settings, mScanCallback);
         }
@@ -363,6 +357,23 @@ public class BluetoothManager {
                         }
                     }
                 };
+            }
+        }
+    }
+
+    private void setupSettingsFilters() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            if (mLEScanner == null) {
+                mLEScanner = mBluetoothAdapter.getBluetoothLeScanner();
+
+                settings = new ScanSettings.Builder()
+                        .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                        .build();
+
+                filters = new ArrayList<>();
+
+                // Only look for CGM.
+                filters.add(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(BluetoothServices.Advertisement)).build());
             }
         }
     }
