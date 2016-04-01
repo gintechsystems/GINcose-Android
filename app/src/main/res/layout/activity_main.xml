@@ -25,7 +25,6 @@
             android:background="@color/light_gray"
             android:maxLines="1"
             android:lines="1"
-            android:maxLength="6"
             android:inputType="textNoSuggestions|textVisiblePassword|textCapCharacters"
             android:hint="@string/transmitter_id_box"
             android:textColorHint="@color/gray"/>

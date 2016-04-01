@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -59,7 +60,8 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
 
-        transmitterIdBox.setFilters(new InputFilter[]{new InputFilter.AllCaps()});
+        // Enable all caps and a max length of a transmitter id, 6.
+        transmitterIdBox.setFilters(new InputFilter[]{new InputFilter.AllCaps(), new InputFilter.LengthFilter(6)});
         transmitterIdBox.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {
@@ -107,12 +109,51 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.actionbar_menu, menu);
+
+        MenuItem miSessionStart = menu.findItem(R.id.action_start_sensor);
+        MenuItem miSessionStop = menu.findItem(R.id.action_stop_sensor);
+
+        boolean sessionExists = GINcoseWrapper.getSharedInstance().getSensorSession(MainActivity.this);
+        if (sessionExists) {
+            miSessionStart.setVisible(false);
+            miSessionStop.setVisible(true);
+        }
+        else {
+            miSessionStop.setVisible(false);
+            miSessionStart.setVisible(true);
+        }
+
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        //int id = item.getItemId();
+        int id = item.getItemId();
+
+        if (id == R.id.action_calibrate) {
+
+        }
+        else if (id == R.id.action_start_sensor) {
+            GINcoseWrapper.getSharedInstance().defaultTransmitter.startSession();
+
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    invalidateOptionsMenu();
+                }
+            }, 500);
+        }
+        else if (id == R.id.action_stop_sensor) {
+            GINcoseWrapper.getSharedInstance().defaultTransmitter.stopSession();
+
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    invalidateOptionsMenu();
+                }
+            }, 500);
+        }
+
         return mDrawerToggle.onOptionsItemSelected(item) || super.onOptionsItemSelected(item);
     }
 
@@ -147,6 +188,18 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             }
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // Display the unbond message when our user returns to our app if forgetting the device.
+        if (GINcoseWrapper.getSharedInstance().showUnbondedMessage) {
+            GINcoseWrapper.getSharedInstance().showUnbondedMessage = false;
+
+            GINcoseWrapper.getSharedInstance().showPermissionToast(GINcoseWrapper.getSharedInstance().currentAct, GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterName + " has been unpaired.");
         }
     }
 

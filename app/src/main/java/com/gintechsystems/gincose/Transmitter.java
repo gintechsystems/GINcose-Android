@@ -14,9 +14,12 @@ import com.gintechsystems.gincose.messages.AuthRequestTxMessage;
 import com.gintechsystems.gincose.messages.AuthStatusRxMessage;
 import com.gintechsystems.gincose.messages.BondRequestTxMessage;
 import com.gintechsystems.gincose.messages.KeepAliveTxMessage;
+import com.gintechsystems.gincose.messages.SessionStartTxMessage;
 import com.gintechsystems.gincose.messages.TransmitterTimeTxMessage;
+import com.gintechsystems.gincose.messages.TransmitterVersionTxMessage;
 import com.gintechsystems.gincose.messages.UnbondRequestTxMessage;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
@@ -36,8 +39,11 @@ import javax.crypto.spec.SecretKeySpec;
 public class Transmitter {
     public String transmitterId;
 
-    public Boolean isModeControl = false;
-    public Boolean isModeCommunication = false;
+    public String transmitterAddress;
+    public String transmitterName;
+
+    public boolean isModeControl = false;
+    public boolean isModeCommunication = false;
 
     public Transmitter() {}
 
@@ -54,28 +60,34 @@ public class Transmitter {
                 Log.i("Auth", "Transmitter already authenticated");
 
                 if (GINcoseWrapper.getSharedInstance().requestUnbond) {
+                    GINcoseWrapper.getSharedInstance().requestUnbond = false;
+
                     UnbondRequestTxMessage unbondRequest = new UnbondRequestTxMessage();
                     characteristic.setValue(unbondRequest.byteSequence);
                     gatt.writeCharacteristic(characteristic);
-
-                    unpairDevice(gatt.getDevice());
-
-                    GINcoseWrapper.getSharedInstance().requestUnbond = false;
                     return;
                 }
 
                 gatt.setCharacteristicNotification(GINcoseWrapper.getSharedInstance().authCharacteristic, false);
 
-                // Looks like we are authenticated and bonded, write the control characteristics.
+                if (GINcoseWrapper.getSharedInstance().newAuthFromUnbond) {
+                    return;
+                }
+
+                // Looks like we are authenticated and bonded, read the transmitter info if first auth or write the control characteristics.
                 control(gatt, characteristic);
                 return;
             }
             else if (GINcoseWrapper.getSharedInstance().authStatus.authenticated == 1 && GINcoseWrapper.getSharedInstance().authStatus.bonded == 2) {
                 Log.i("Auth", "Transmitter authenticated, requesting bond");
 
+                GINcoseWrapper.getSharedInstance().newAuthFromUnbond = true;
+
                 KeepAliveTxMessage keepAliveTx = new KeepAliveTxMessage(25);
                 characteristic.setValue(keepAliveTx.byteSequence);
                 gatt.writeCharacteristic(characteristic);
+
+                Extensions.doSleep(200);
 
                 BondRequestTxMessage bondRequestTx = new BondRequestTxMessage();
                 characteristic.setValue(bondRequestTx.byteSequence);
@@ -138,22 +150,45 @@ public class Transmitter {
             gatt.writeDescriptor(descriptor);
         }
 
-        TransmitterTimeTxMessage timeTx = new TransmitterTimeTxMessage();
-        characteristic.setValue(timeTx.byteSequence);
-        gatt.writeCharacteristic(characteristic);
+        if (GINcoseWrapper.getSharedInstance().requestNewSession) {
+            SessionStartTxMessage sessionStartTx = new SessionStartTxMessage();
+            characteristic.setValue(sessionStartTx.byteSequence);
+            gatt.writeCharacteristic(characteristic);
+        }
+        else {
+            TransmitterTimeTxMessage timeTx = new TransmitterTimeTxMessage();
+            characteristic.setValue(timeTx.byteSequence);
+            gatt.writeCharacteristic(characteristic);
+        }
     }
 
     public void communicate(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-        if (!isModeCommunication) {
-            isModeCommunication = true;
-            isModeControl = false;
+        byte firstByte = characteristic.getValue()[0];
 
-            gatt.setCharacteristicNotification(GINcoseWrapper.getSharedInstance().communicationCharacteristic, true);
 
-            BluetoothGattDescriptor descriptor = GINcoseWrapper.getSharedInstance().communicationCharacteristic.getDescriptor(BluetoothServices.CharacteristicUpdateNotification);
-            descriptor.setValue(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE);
-            gatt.writeDescriptor(descriptor);
-        }
+    }
+
+    public void readNewSession() {
+        GINcoseWrapper.getSharedInstance().requestNewSession = false;
+
+        isModeControl = false;
+        isModeCommunication = true;
+    }
+
+    public void startSession() {
+        GINcoseWrapper.getSharedInstance().saveSensorSession(GINcoseWrapper.getSharedInstance().currentAct, true);
+        GINcoseWrapper.getSharedInstance().requestNewSession = true;
+
+        Log.i("CurrentSession", "Session Start Requested");
+    }
+
+    public void stopSession() {
+        isModeControl = false;
+        isModeCommunication = false;
+
+        GINcoseWrapper.getSharedInstance().saveSensorSession(GINcoseWrapper.getSharedInstance().currentAct, false);
+
+        Log.i("CurrentSession", "Session Stop Requested");
     }
 
     @SuppressLint("GetInstance")
@@ -205,7 +240,7 @@ public class Transmitter {
 
     // These methods work with API < 19 - Bonding Methods
 
-    private void pairDevice(BluetoothDevice device) {
+    public void pairDevice(BluetoothDevice device) {
         try {
             Method method = device.getClass().getMethod("createBond", (Class[]) null);
             method.invoke(device, (Object[]) null);
@@ -214,11 +249,10 @@ public class Transmitter {
         }
     }
 
-    private void unpairDevice(BluetoothDevice device) {
+    public void unpairDevice(BluetoothDevice device) {
         try {
             Method method = device.getClass().getMethod("removeBond", (Class[]) null);
             method.invoke(device, (Object[]) null);
-
         } catch (Exception e) {
             e.printStackTrace();
         }

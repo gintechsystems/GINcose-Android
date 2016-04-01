@@ -5,6 +5,7 @@
     <string name="transmitter_id_box">Transmitter ID</string>
 
     <string name="calibrate_text">Calibrate</string>
+    <string name="start_sensor_text">Start Sensor</string>
     <string name="stop_sensor_text">Stop Sensor</string>
 
     <string name="drawer_open">drawer_open</string>

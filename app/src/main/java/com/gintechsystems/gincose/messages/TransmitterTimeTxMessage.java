@@ -15,6 +15,7 @@ public class TransmitterTimeTxMessage extends TransmitterMessage {
         data = ByteBuffer.allocate(3);
         data.put(opcode);
         data.put(crc);
+        
         byteSequence = data.array();
     }
 }

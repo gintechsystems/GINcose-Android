@@ -7,8 +7,15 @@
           android:orderInCategory="1"
           app:showAsAction="never" />
 
+    <item android:id="@+id/action_start_sensor"
+          android:title="@string/start_sensor_text"
+          android:orderInCategory="2"
+          android:visible="false"
+          app:showAsAction="never" />
+
     <item android:id="@+id/action_stop_sensor"
           android:title="@string/stop_sensor_text"
           android:orderInCategory="2"
+          android:visible="false"
           app:showAsAction="never" />
 </menu>

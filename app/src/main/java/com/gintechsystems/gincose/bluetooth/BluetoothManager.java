@@ -19,15 +19,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.ParcelUuid;
 import android.util.Log;
 
 import com.gintechsystems.gincose.Extensions;
 import com.gintechsystems.gincose.GINcoseWrapper;
-import com.gintechsystems.gincose.messages.CalibrateGlucoseRxMessage;
-import com.gintechsystems.gincose.messages.CalibrateGlucoseTxMessage;
 import com.gintechsystems.gincose.messages.FirmwareVersionRxMessage;
 import com.gintechsystems.gincose.messages.FirmwareVersionTxMessage;
+import com.gintechsystems.gincose.messages.SessionStartRxMessage;
 import com.gintechsystems.gincose.messages.TransmitterStatus;
 import com.gintechsystems.gincose.messages.BatteryRxMessage;
 import com.gintechsystems.gincose.messages.BatteryTxMessage;
@@ -37,12 +38,15 @@ import com.gintechsystems.gincose.messages.SensorRxMessage;
 import com.gintechsystems.gincose.messages.SensorTxMessage;
 import com.gintechsystems.gincose.messages.TransmitterTimeRxMessage;
 import com.gintechsystems.gincose.messages.DisconnectTxMessage;
+import com.gintechsystems.gincose.messages.TransmitterVersionTxMessage;
 
 import org.joda.time.DateTime;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -79,6 +83,10 @@ public class BluetoothManager {
             GINcoseWrapper.getSharedInstance().currentAct.startActivityForResult(enableBtIntent, 0);
         }
         else {
+            GINcoseWrapper.getSharedInstance().isDeviceBonded = GINcoseWrapper.getSharedInstance().getTransmitterBondState(GINcoseWrapper.getSharedInstance().currentAct);
+
+            updateBondingStatus();
+
             // Start scanning!
             startScan();
         }
@@ -97,7 +105,7 @@ public class BluetoothManager {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             setupLeScanCallback();
 
-            mBluetoothAdapter.startLeScan(new UUID[]{ BluetoothServices.Advertisement }, mLeScanCallback);
+            mBluetoothAdapter.startLeScan(new UUID[]{BluetoothServices.Advertisement}, mLeScanCallback);
         }
         else {
             setupScanCallback();
@@ -110,11 +118,19 @@ public class BluetoothManager {
 
     private void connectToDevice(BluetoothDevice device) {
         if (mGatt == null) {
-            mGatt = device.connectGatt(GINcoseWrapper.getSharedInstance().currentAct, false, gattCallback);
             stopScan();
 
-            // Required when attempting to bond.
+            mGatt = device.connectGatt(GINcoseWrapper.getSharedInstance().currentAct, false, gattCallback);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                mGatt.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_HIGH);
+            }
+
+            // Read bonding state changes for the device.
             if (!GINcoseWrapper.getSharedInstance().isBondingReceiverRegistered) {
+                GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterAddress = device.getAddress();
+                GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterName = device.getName();
+
                 GINcoseWrapper.getSharedInstance().currentAct.registerReceiver(mPairReceiver, new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED));
                 GINcoseWrapper.getSharedInstance().isBondingReceiverRegistered = true;
             }
@@ -131,6 +147,7 @@ public class BluetoothManager {
                     break;
                 case BluetoothProfile.STATE_DISCONNECTED:
                     Log.e("gattCallback", "STATE_DISCONNECTED");
+                    GINcoseWrapper.getSharedInstance().newAuthFromUnbond = false;
                     mGatt.close();
                     mGatt = null;
                     startScan();
@@ -159,9 +176,18 @@ public class BluetoothManager {
                 // Control
                 GINcoseWrapper.getSharedInstance().defaultTransmitter.control(gatt, GINcoseWrapper.getSharedInstance().controlCharacteristic);
             }
+            else if (GINcoseWrapper.getSharedInstance().defaultTransmitter.isModeCommunication) {
+                gatt.setCharacteristicNotification(GINcoseWrapper.getSharedInstance().communicationCharacteristic, true);
+
+                // Communicate
+                if (!gatt.readCharacteristic(GINcoseWrapper.getSharedInstance().communicationCharacteristic)) {
+                    Log.e("CommCharacteristic", "CommReadError");
+                }
+            }
             else {
                 gatt.setCharacteristicNotification(GINcoseWrapper.getSharedInstance().authCharacteristic, true);
 
+                // Authentication
                 if (!gatt.readCharacteristic(GINcoseWrapper.getSharedInstance().authCharacteristic)) {
                     Log.e("AuthCharacteristic", "AuthReadError");
                 }
@@ -217,6 +243,7 @@ public class BluetoothManager {
 
                     if (GINcoseWrapper.getSharedInstance().startTimeInterval == -1) {
                         GINcoseWrapper.getSharedInstance().startTimeInterval = new DateTime().getMillis() - transmitterTime.currentTime;
+                        //Log.i("StartTime", String.valueOf(GINcoseWrapper.getSharedInstance().startTimeInterval));
                     }
 
                     GlucoseTxMessage glucoseTx = new GlucoseTxMessage();
@@ -234,14 +261,27 @@ public class BluetoothManager {
                     gatt.writeCharacteristic(characteristic);
                 }
                 // Firmware
-                else if (firstByte == 0x1c) {
+                else if (firstByte == 0x21) {
                     FirmwareVersionRxMessage firmwareRx = new FirmwareVersionRxMessage(characteristic.getValue());
-                    Log.i("FirmwareVersion", String.valueOf(firmwareRx.version));
+
+                    TransmitterVersionTxMessage transmitterVersionTx = new TransmitterVersionTxMessage();
+                    characteristic.setValue(transmitterVersionTx.byteSequence);
+                    gatt.writeCharacteristic(characteristic);
+                }
+                // Session Start
+                else if (firstByte == 0x27) {
+                    SessionStartRxMessage sessionStartRx = new SessionStartRxMessage(characteristic.getValue());
+
+                    GINcoseWrapper.getSharedInstance().defaultTransmitter.readNewSession();
+
+                    gatt.setCharacteristicNotification(GINcoseWrapper.getSharedInstance().controlCharacteristic, false);
+
+                    GINcoseWrapper.getSharedInstance().doDisconnectMessage(gatt, characteristic);
                 }
                 else {
                     gatt.setCharacteristicNotification(GINcoseWrapper.getSharedInstance().controlCharacteristic, false);
 
-                    doDisconnectMessage(gatt, characteristic);
+                    GINcoseWrapper.getSharedInstance().doDisconnectMessage(gatt, characteristic);
                 }
             }
         }
@@ -254,7 +294,7 @@ public class BluetoothManager {
             if (!GINcoseWrapper.getSharedInstance().defaultTransmitter.isModeControl) {
                 // We do not want to read if the written bytes were a unbond / bond request.
                 // Complete the bond process with the callback and then read the characteristic once bonded.
-                if (characteristic.getValue() != null && characteristic.getValue()[0] != 0x7 && characteristic.getValue()[0] != 0x6) {
+                if (characteristic.getValue() != null && characteristic.getValue()[0] != 0x7) {
                     gatt.readCharacteristic(characteristic);
                 }
             }
@@ -267,43 +307,98 @@ public class BluetoothManager {
                 Log.i("CharHex", Extensions.bytesToHex(characteristic.getValue()));
 
                 if (!GINcoseWrapper.getSharedInstance().defaultTransmitter.isModeControl) {
-                    // Authenticate
-                    GINcoseWrapper.getSharedInstance().defaultTransmitter.authenticate(gatt, characteristic);
+                    if (GINcoseWrapper.getSharedInstance().defaultTransmitter.isModeCommunication) {
+                        // Communicate
+                        GINcoseWrapper.getSharedInstance().defaultTransmitter.communicate(gatt, characteristic);
+                    }
+                    else {
+                        // Authenticate
+                        GINcoseWrapper.getSharedInstance().defaultTransmitter.authenticate(gatt, characteristic);
+                    }
                 }
             }
         }
     };
 
+    // Checks if the bonding state should be updated.
+    private void updateBondingStatus() {
+        boolean isDeviceBondedWithSystem = getTransmitterBondStatus(mBluetoothAdapter);
+
+        if (GINcoseWrapper.getSharedInstance().isDeviceBonded && !isDeviceBondedWithSystem) {
+            Log.i("BondProcess", "Unpaired");
+
+            GINcoseWrapper.getSharedInstance().saveTransmitterBondState(GINcoseWrapper.getSharedInstance().currentAct, false);
+            GINcoseWrapper.getSharedInstance().isDeviceBonded = false;
+
+            GINcoseWrapper.getSharedInstance().requestUnbond = true;
+
+            GINcoseWrapper.getSharedInstance().showPermissionToast(GINcoseWrapper.getSharedInstance().currentAct, GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterName + " has been unpaired.");
+        }
+    }
+
+    // Check if a transmitter is bonded to the system.
+    public boolean getTransmitterBondStatus(BluetoothAdapter adapter) {
+        boolean isBonded = false;
+
+        Set<BluetoothDevice> pairedDevices = adapter.getBondedDevices();
+        if (pairedDevices.size() > 0) {
+            for (BluetoothDevice device : pairedDevices) {
+                if (device.getName() != null) {
+                    String transmitterIdLastTwo = Extensions.lastTwoCharactersOfString(GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterId);
+                    String deviceNameLastTwo = Extensions.lastTwoCharactersOfString(device.getName());
+
+                    if (transmitterIdLastTwo.equals(deviceNameLastTwo)) {
+                        isBonded = true;
+                    }
+                }
+            }
+        }
+
+        return isBonded;
+    }
+
     //This receiver detects when the bonding state for a bt device has changed.
     private final BroadcastReceiver mPairReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
+            if (BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(intent.getAction())) {
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 
-            if (BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(action)) {
-                final int state = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.ERROR);
-                //final int prevState = intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE, BluetoothDevice.ERROR);
-
-                if (state == BluetoothDevice.BOND_BONDED) {
-                    Log.i("BondProcess", "Paired");
-
-                    if (mGatt.getDevice().getName() != null) {
-                        GINcoseWrapper.getSharedInstance().showPermissionToast(GINcoseWrapper.getSharedInstance().currentAct, "Transmitter found, paired with " + mGatt.getDevice().getName() + ".");
-                    }
-                    else {
-                        GINcoseWrapper.getSharedInstance().showPermissionToast(GINcoseWrapper.getSharedInstance().currentAct, "Transmitter found & paired.");
-                    }
-
-                    // The device is now paired, read the auth once more.
-                    mGatt.readCharacteristic(GINcoseWrapper.getSharedInstance().authCharacteristic);
-
-                    GINcoseWrapper.getSharedInstance().currentAct.unregisterReceiver(this);
-                    GINcoseWrapper.getSharedInstance().isBondingReceiverRegistered = false;
+                // Make sure the device that is detected as pairing is our transmitter.
+                if (!GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterAddress.equals(device.getAddress())) {
+                    Log.e("BondProcess", "UnknownDevice");
+                    return;
                 }
-                else if (state == BluetoothDevice.BOND_BONDING) {
-                    Log.i("BondProcess", "Bonding");
+
+                final int state = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.ERROR);
+
+                if (GINcoseWrapper.getSharedInstance().isDeviceBonded) {
+                    Log.i("BondProcess", "Unpaired");
+
+                    GINcoseWrapper.getSharedInstance().saveTransmitterBondState(GINcoseWrapper.getSharedInstance().currentAct, false);
+                    GINcoseWrapper.getSharedInstance().isDeviceBonded = false;
+
+                    GINcoseWrapper.getSharedInstance().requestUnbond = true;
+
+                    GINcoseWrapper.getSharedInstance().showUnbondedMessage = true;
                 }
                 else {
-                    Log.i("BondProcess", "Unknown");
+                    if (state == BluetoothDevice.BOND_BONDED) {
+                        Log.i("BondProcess", "Paired");
+
+                        GINcoseWrapper.getSharedInstance().saveTransmitterBondState(GINcoseWrapper.getSharedInstance().currentAct, true);
+                        GINcoseWrapper.getSharedInstance().isDeviceBonded = true;
+
+                        GINcoseWrapper.getSharedInstance().showPermissionToast(GINcoseWrapper.getSharedInstance().currentAct, "Transmitter found, paired with " + device.getName() + ".");
+
+                        // The device is now paired, read the auth once more.
+                        mGatt.readCharacteristic(GINcoseWrapper.getSharedInstance().authCharacteristic);
+                    }
+                    else if (state == BluetoothDevice.BOND_BONDING) {
+                        Log.i("BondProcess", "Bonding");
+                    }
+                    else {
+                        Log.i("BondProcess", "Unknown");
+                    }
                 }
             }
         }
@@ -372,12 +467,5 @@ public class BluetoothManager {
             // Only look for CGM.
             filters.add(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(BluetoothServices.Advertisement)).build());
         }
-    }
-
-    // Sends the disconnect tx message to our bt device.
-    private void doDisconnectMessage(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-        DisconnectTxMessage disconnectTx = new DisconnectTxMessage();
-        characteristic.setValue(disconnectTx.byteSequence);
-        gatt.writeCharacteristic(characteristic);
     }
 }
