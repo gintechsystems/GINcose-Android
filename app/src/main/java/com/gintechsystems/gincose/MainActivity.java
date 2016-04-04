@@ -30,8 +30,6 @@ import com.gintechsystems.gincose.bluetooth.BluetoothManager;
  * Created by joeginley on 3/13/16.
  */
 public class MainActivity extends AppCompatActivity {
-    private BluetoothManager btManager;
-
     private ListView mDrawerList;
     private DrawerLayout mDrawerLayout;
     private ArrayAdapter<String> mAdapter;
@@ -164,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
         // BT Request
         if (requestCode == 0) {
             if (resultCode == Activity.RESULT_OK) {
-                btManager.setupBluetooth();
+                GINcoseWrapper.getSharedInstance().btManager.setupBluetooth();
             }
             else {
                 GINcoseWrapper.getSharedInstance().showPermissionToast(this, "Please allow bluetooth services in order to access bluetooth devices.");
@@ -203,19 +201,26 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        GINcoseWrapper.getSharedInstance().doStopBTManagerOnExit();
+    }
+
     private void startBTManager() {
         if (GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterId != null) {
-            if (btManager == null) {
+            if (GINcoseWrapper.getSharedInstance().btManager == null) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (!GINcoseWrapper.getSharedInstance().locationPermission()) {
                         requestPermissions(new String[]{ Manifest.permission.ACCESS_FINE_LOCATION }, 0);
                     }
                     else {
-                        btManager = new BluetoothManager();
+                        GINcoseWrapper.getSharedInstance().btManager = new BluetoothManager();
                     }
                 }
                 else {
-                    btManager = new BluetoothManager();
+                    GINcoseWrapper.getSharedInstance().btManager = new BluetoothManager();
                 }
             }
         }

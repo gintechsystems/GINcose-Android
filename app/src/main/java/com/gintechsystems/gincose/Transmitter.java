@@ -238,7 +238,7 @@ public class Transmitter {
         return null;
     }
 
-    // These methods work with API < 19 - Bonding Methods
+    // These methods work with API >= 18 - BT Device Reflection Methods
 
     public void pairDevice(BluetoothDevice device) {
         try {
@@ -253,6 +253,15 @@ public class Transmitter {
         try {
             Method method = device.getClass().getMethod("removeBond", (Class[]) null);
             method.invoke(device, (Object[]) null);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void renamePairDevice(BluetoothDevice device, String name) {
+        try {
+            Method m = device.getClass().getMethod("setAlias", String.class);
+            m.invoke(device, name);
         } catch (Exception e) {
             e.printStackTrace();
         }

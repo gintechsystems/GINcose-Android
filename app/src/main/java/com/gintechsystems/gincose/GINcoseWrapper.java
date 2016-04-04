@@ -21,6 +21,7 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.gintechsystems.gincose.bluetooth.BluetoothManager;
 import com.gintechsystems.gincose.messages.AuthRequestTxMessage;
 import com.gintechsystems.gincose.messages.AuthStatusRxMessage;
 import com.gintechsystems.gincose.messages.DisconnectTxMessage;
@@ -35,6 +36,8 @@ public class GINcoseWrapper extends Application {
     private static GINcoseWrapper singleton;
 
     public Activity currentAct;
+
+    public BluetoothManager btManager;
 
     public Transmitter defaultTransmitter;
 
@@ -148,6 +151,21 @@ public class GINcoseWrapper extends Application {
         DisconnectTxMessage disconnectTx = new DisconnectTxMessage();
         characteristic.setValue(disconnectTx.byteSequence);
         gatt.writeCharacteristic(characteristic);
+    }
+
+    public void doStopBTManagerOnExit() {
+        if (btManager != null) {
+            btManager.stopScan();
+
+            if (btManager.mGatt != null) {
+                btManager.mGatt.close();
+                btManager.mGatt = null;
+            }
+
+            if (currentAct != null && isBondingReceiverRegistered) {
+                currentAct.unregisterReceiver(btManager.mPairReceiver);
+            }
+        }
     }
 
 }
