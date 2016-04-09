@@ -8,15 +8,13 @@ import java.util.UUID;
 public class BluetoothServices {
 
     //Transmitter Service UUIDs
-    //public static final UUID DeviceInfo = UUID.fromString("180A");
-
-    //iOS uses FEBC?
     public static final UUID Advertisement = UUID.fromString("0000FEBC-0000-1000-8000-00805F9B34FB");
     public static final UUID CGMService = UUID.fromString("F8083532-849E-531C-C594-30F1F86A4EA5");
     public static final UUID ServiceB = UUID.fromString("F8084532-849E-531C-C594-30F1F86A4EA5");
 
-    //DeviceInfoCharacteristicUUID, Read, DexcomUN
-    //public static final UUID ManufacturerNameString = UUID.fromString("2A29");
+    //DeviceInfoCharacteristicUUID
+    public static final UUID DeviceInfo = UUID.fromString("0000180A-0000-1000-8000-00805F9B34FB");
+    public static final UUID ManufacturerNameString = UUID.fromString("00002A29-0000-1000-8000-00805F9B34FB");
 
     //CGMServiceCharacteristicUUID
     public static final UUID Communication = UUID.fromString("F8083533-849E-531C-C594-30F1F86A4EA5");

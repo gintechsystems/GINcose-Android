@@ -66,10 +66,10 @@ public class BluetoothManager {
     private ScanSettings settings;
     private List<ScanFilter> filters;
 
-    // API 18 - 20
+    // API >= 21
     private ScanCallback mScanCallback;
 
-    // API >= 21
+    // API 18 - 20
     private BluetoothAdapter.LeScanCallback mLeScanCallback;
 
     public BluetoothManager() {
@@ -98,8 +98,6 @@ public class BluetoothManager {
     public void stopScan() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             mBluetoothAdapter.stopLeScan(mLeScanCallback);
-
-            mBluetoothAdapter.cancelDiscovery();
         }
         else {
             mLEScanner.stopScan(mScanCallback);
@@ -111,8 +109,6 @@ public class BluetoothManager {
             setupLeScanCallback();
 
             mBluetoothAdapter.startLeScan(mLeScanCallback);
-
-            mBluetoothAdapter.startDiscovery();
         }
         else {
             setupScanCallback();
@@ -398,14 +394,10 @@ public class BluetoothManager {
                     if (state == BluetoothDevice.BOND_BONDED) {
                         Log.i("BondProcess", "Paired");
 
-                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-                            GINcoseWrapper.getSharedInstance().defaultTransmitter.renamePairDevice(device, GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterName);
-                        }
-
                         GINcoseWrapper.getSharedInstance().saveTransmitterBondState(GINcoseWrapper.getSharedInstance().currentAct, true);
                         GINcoseWrapper.getSharedInstance().isDeviceBonded = true;
 
-                        GINcoseWrapper.getSharedInstance().showPermissionToast(GINcoseWrapper.getSharedInstance().currentAct, "Transmitter found, paired with " + device.getName() + ".");
+                        GINcoseWrapper.getSharedInstance().showPermissionToast(GINcoseWrapper.getSharedInstance().currentAct, "Transmitter found, paired with " + GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterName + ".");
 
                         // The device is now paired, read the auth once more.
                         mGatt.readCharacteristic(GINcoseWrapper.getSharedInstance().authCharacteristic);
@@ -428,7 +420,7 @@ public class BluetoothManager {
             mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
                 @Override
                 public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
-                    // There are bugs with the LeScan for most devices, we will have to loop through our scanRecord to make sure the UUID is what we want.
+                    // There is a bug filtering UUIDs so we will have to parse our scanRecord.
                     // We couldn't pass the UUID directly so we find it here then proceed to connecting to the device if found.
                     String deviceName = null;
 
@@ -452,12 +444,15 @@ public class BluetoothManager {
                             connectToDevice(device, deviceName);
                         }
                     }
+                    else {
+                        Log.i("Scan", "Device name not found but address is " + device.getAddress());
+                    }
                 }
             };
         }
     }
 
-    // API >= 21 - There are 2 API checks because toString() cries about it.
+    // API >= 21
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private void setupScanCallback() {
         if (mScanCallback == null) {

@@ -258,12 +258,4 @@ public class Transmitter {
         }
     }
 
-    public void renamePairDevice(BluetoothDevice device, String name) {
-        try {
-            Method m = device.getClass().getMethod("setAlias", String.class);
-            m.invoke(device, name);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 }

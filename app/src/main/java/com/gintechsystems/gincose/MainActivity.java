@@ -245,7 +245,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void addDrawerItems() {
-        String[] navArray = { "Alerts", "Settings", "Share2" };
+        String[] navArray = { "Alerts", "Settings", "Share", "Help" };
         mAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, navArray);
         mDrawerList.setAdapter(mAdapter);
 
