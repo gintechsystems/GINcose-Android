@@ -168,37 +168,39 @@ public class BluetoothManager {
 
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-            BluetoothGattService cgmService = gatt.getService(BluetoothServices.CGMService);
-            Log.i("onServiceDiscovered", cgmService.getUuid().toString());
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                BluetoothGattService cgmService = gatt.getService(BluetoothServices.CGMService);
+                Log.i("onServiceDiscovered", cgmService.getUuid().toString());
 
-            GINcoseWrapper.getSharedInstance().authCharacteristic = cgmService.getCharacteristic(BluetoothServices.Authentication);
-            GINcoseWrapper.getSharedInstance().controlCharacteristic = cgmService.getCharacteristic(BluetoothServices.Control);
-            GINcoseWrapper.getSharedInstance().communicationCharacteristic = cgmService.getCharacteristic(BluetoothServices.Communication);
+                GINcoseWrapper.getSharedInstance().authCharacteristic = cgmService.getCharacteristic(BluetoothServices.Authentication);
+                GINcoseWrapper.getSharedInstance().controlCharacteristic = cgmService.getCharacteristic(BluetoothServices.Control);
+                GINcoseWrapper.getSharedInstance().communicationCharacteristic = cgmService.getCharacteristic(BluetoothServices.Communication);
 
-            if (GINcoseWrapper.getSharedInstance().defaultTransmitter.isModeControl) {
-                gatt.setCharacteristicNotification(GINcoseWrapper.getSharedInstance().controlCharacteristic, true);
+                if (GINcoseWrapper.getSharedInstance().defaultTransmitter.isModeControl) {
+                    gatt.setCharacteristicNotification(GINcoseWrapper.getSharedInstance().controlCharacteristic, true);
 
-                BluetoothGattDescriptor descriptor = GINcoseWrapper.getSharedInstance().controlCharacteristic.getDescriptor(BluetoothServices.CharacteristicUpdateNotification);
-                descriptor.setValue(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE);
-                gatt.writeDescriptor(descriptor);
+                    BluetoothGattDescriptor descriptor = GINcoseWrapper.getSharedInstance().controlCharacteristic.getDescriptor(BluetoothServices.CharacteristicUpdateNotification);
+                    descriptor.setValue(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE);
+                    gatt.writeDescriptor(descriptor);
 
-                // Control
-                GINcoseWrapper.getSharedInstance().defaultTransmitter.control(gatt, GINcoseWrapper.getSharedInstance().controlCharacteristic);
-            }
-            else if (GINcoseWrapper.getSharedInstance().defaultTransmitter.isModeCommunication) {
-                gatt.setCharacteristicNotification(GINcoseWrapper.getSharedInstance().communicationCharacteristic, true);
-
-                // Communicate
-                if (!gatt.readCharacteristic(GINcoseWrapper.getSharedInstance().communicationCharacteristic)) {
-                    Log.e("CommCharacteristic", "CommReadError");
+                    // Control
+                    GINcoseWrapper.getSharedInstance().defaultTransmitter.control(gatt, GINcoseWrapper.getSharedInstance().controlCharacteristic);
                 }
-            }
-            else {
-                gatt.setCharacteristicNotification(GINcoseWrapper.getSharedInstance().authCharacteristic, true);
+                else if (GINcoseWrapper.getSharedInstance().defaultTransmitter.isModeCommunication) {
+                    gatt.setCharacteristicNotification(GINcoseWrapper.getSharedInstance().communicationCharacteristic, true);
 
-                // Authentication
-                if (!gatt.readCharacteristic(GINcoseWrapper.getSharedInstance().authCharacteristic)) {
-                    Log.e("AuthCharacteristic", "AuthReadError");
+                    // Communicate
+                    if (!gatt.readCharacteristic(GINcoseWrapper.getSharedInstance().communicationCharacteristic)) {
+                        Log.e("CommCharacteristic", "CommReadError");
+                    }
+                }
+                else {
+                    gatt.setCharacteristicNotification(GINcoseWrapper.getSharedInstance().authCharacteristic, true);
+
+                    // Authentication
+                    if (!gatt.readCharacteristic(GINcoseWrapper.getSharedInstance().authCharacteristic)) {
+                        Log.e("AuthCharacteristic", "AuthReadError");
+                    }
                 }
             }
         }
@@ -471,6 +473,11 @@ public class BluetoothManager {
                             connectToDevice(btDevice, null);
                         }
                     }
+                }
+
+                @Override
+                public void onScanFailed(int errorCode) {
+                    Log.e("ScanFailedErrorCode", String.valueOf(errorCode));
                 }
             };
         }
