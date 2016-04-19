@@ -94,7 +94,7 @@ public class Transmitter {
                 gatt.writeCharacteristic(characteristic);
 
                 // If we don't call this the device does not officially get paired!
-                pairDevice(gatt.getDevice());
+                gatt.getDevice().createBond();
             }
             else {
                 Log.i("Auth", "Transmitter not authenticated");
@@ -238,16 +238,7 @@ public class Transmitter {
         return null;
     }
 
-    // These methods work with API >= 18 - BT Device Reflection Methods
-
-    public void pairDevice(BluetoothDevice device) {
-        try {
-            Method method = device.getClass().getMethod("createBond", (Class[]) null);
-            method.invoke(device, (Object[]) null);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+    // These methods work with API >= 19 - BT Device Reflection Methods
 
     public void unpairDevice(BluetoothDevice device) {
         try {

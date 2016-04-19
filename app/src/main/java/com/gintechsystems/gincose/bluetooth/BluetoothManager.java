@@ -49,19 +49,24 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 
 /**
  * Created by joeginley on 3/16/16.
  */
-@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
+@TargetApi(Build.VERSION_CODES.KITKAT)
 @SuppressWarnings("deprecation")
 public class BluetoothManager {
+
+    private boolean restartServices = false;
 
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothLeScanner mLEScanner;
 
     public BluetoothGatt mGatt;
+    public BluetoothDevice mDevice;
 
     private ScanSettings settings;
     private List<ScanFilter> filters;
@@ -69,7 +74,7 @@ public class BluetoothManager {
     // API >= 21
     private ScanCallback mScanCallback;
 
-    // API 18 - 20
+    // API 19 - 20
     private BluetoothAdapter.LeScanCallback mLeScanCallback;
 
     public BluetoothManager() {
@@ -124,6 +129,7 @@ public class BluetoothManager {
             stopScan();
 
             mGatt = device.connectGatt(GINcoseWrapper.getSharedInstance().currentAct, false, gattCallback);
+            mDevice = device;
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 mGatt.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_HIGH);
@@ -159,6 +165,10 @@ public class BluetoothManager {
                     GINcoseWrapper.getSharedInstance().newAuthFromUnbond = false;
                     mGatt.close();
                     mGatt = null;
+                    if (restartServices) {
+                        restartServices = false;
+                        return;
+                    }
                     startScan();
                     break;
                 default:
@@ -202,6 +212,11 @@ public class BluetoothManager {
                         Log.e("AuthCharacteristic", "AuthReadError");
                     }
                 }
+            }
+            else {
+                restartServices = true;
+                stopScan();
+                refreshBluetoothAdapterState();
             }
         }
 
@@ -368,6 +383,29 @@ public class BluetoothManager {
         return isBonded;
     }
 
+    // Change the state of our bt adapter, this works around issues and bugs for API 18-20.
+    private void refreshBluetoothAdapterState() {
+        if (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled()) {
+            mBluetoothAdapter.disable();
+
+            Timer adapterTimer = new Timer();
+            adapterTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    mBluetoothAdapter.enable();
+                }
+            }, 1000);
+
+            Timer serviceTimer = new Timer();
+            serviceTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    connectToDevice(mDevice, GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterName);
+                }
+            }, 2000);
+        }
+    }
+
     //This receiver detects when the bonding state for a bt device has changed.
     public final BroadcastReceiver mPairReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
@@ -416,45 +454,47 @@ public class BluetoothManager {
     };
 
     // API 18 - 20
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
+    @TargetApi(Build.VERSION_CODES.KITKAT)
     private void setupLeScanCallback() {
         if (mLeScanCallback == null) {
             mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
                 @Override
-                public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
-                    // There is a bug filtering UUIDs so we will have to parse our scanRecord.
-                    // We couldn't pass the UUID directly so we find it here then proceed to connecting to the device if found.
-                    String deviceName = null;
+                public void onLeScan(final BluetoothDevice device, int rssi, final byte[] scanRecord) {
+                    GINcoseWrapper.getSharedInstance().currentAct.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            // There is a bug filtering UUIDs so we will have to parse our scanRecord.
+                            // We couldn't pass the UUID directly so we find it here then proceed to connecting to the device if found.
+                            String deviceName = null;
 
-                    BLEAdvertisedData bleAdvertisedData = Extensions.parseAdertisedData(scanRecord);
-                    if (bleAdvertisedData.getUUIDs().size() > 0) {
-                        for (int i = 0; i < bleAdvertisedData.getUUIDs().size(); i++) {
-                            if (bleAdvertisedData.getUUIDs().get(i).equals(BluetoothServices.Advertisement)) {
-                                Log.i("Name", String.valueOf(bleAdvertisedData.getName()));
-                                deviceName = bleAdvertisedData.getName();
-                                break;
+                            BLEAdvertisedData bleAdvertisedData = Extensions.parseAdertisedData(scanRecord);
+                            if (bleAdvertisedData.getUUIDs().size() > 0) {
+                                for (int i = 0; i < bleAdvertisedData.getUUIDs().size(); i++) {
+                                    if (bleAdvertisedData.getUUIDs().get(i).equals(BluetoothServices.Advertisement)) {
+                                        Log.i("Name", String.valueOf(bleAdvertisedData.getName()));
+                                        deviceName = bleAdvertisedData.getName();
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (deviceName != null) {
+                                // Check if the device name is set & that it is a Dexcom transmitter. Match it with the transmitter id that was entered.
+                                String transmitterIdLastTwo = Extensions.lastTwoCharactersOfString(GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterId);
+                                String deviceNameLastTwo = Extensions.lastTwoCharactersOfString(deviceName);
+
+                                if (transmitterIdLastTwo.toUpperCase().equals(deviceNameLastTwo.toUpperCase())) {
+                                    connectToDevice(device, deviceName);
+                                }
                             }
                         }
-                    }
-
-                    if (deviceName != null) {
-                        // Check if the device name is set & that it is a Dexcom transmitter. Match it with the transmitter id that was entered.
-                        String transmitterIdLastTwo = Extensions.lastTwoCharactersOfString(GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterId);
-                        String deviceNameLastTwo = Extensions.lastTwoCharactersOfString(deviceName);
-
-                        if (transmitterIdLastTwo.toUpperCase().equals(deviceNameLastTwo.toUpperCase())) {
-                            connectToDevice(device, deviceName);
-                        }
-                    }
-                    else {
-                        Log.i("Scan", "Device name not found but address is " + device.getAddress());
-                    }
+                    });
                 }
             };
         }
     }
 
-    // API >= 21
+    // API >= 21 Functions
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private void setupScanCallback() {
         if (mScanCallback == null) {
@@ -498,4 +538,5 @@ public class BluetoothManager {
             filters.add(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(BluetoothServices.Advertisement)).build());
         }
     }
+
 }
