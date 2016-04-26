@@ -82,13 +82,6 @@ public class Transmitter {
                 Log.i("Auth", "Transmitter authenticated, requesting bond");
 
                 GINcoseWrapper.getSharedInstance().newAuthFromUnbond = true;
-
-                KeepAliveTxMessage keepAliveTx = new KeepAliveTxMessage(25);
-                characteristic.setValue(keepAliveTx.byteSequence);
-                gatt.writeCharacteristic(characteristic);
-
-                Extensions.doSleep(200);
-
                 BondRequestTxMessage bondRequestTx = new BondRequestTxMessage();
                 characteristic.setValue(bondRequestTx.byteSequence);
                 gatt.writeCharacteristic(characteristic);
