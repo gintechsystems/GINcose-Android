@@ -49,6 +49,6 @@ public class Extensions {
     public static String lastTwoCharactersOfString(String s) {
         return s.substring(s.length() - 2);
     }
-    
+
 }
 

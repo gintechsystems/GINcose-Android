@@ -69,7 +69,7 @@ public class BluetoothManager {
     private ScanSettings settings;
     private List<ScanFilter> filters;
 
-    // API >= 20
+    // API >= 21
     private ScanCallback mScanCallback;
 
     public BluetoothManager() {
@@ -400,7 +400,6 @@ public class BluetoothManager {
         }
     };
 
-    // API >= 20 Functions
     private void setupScanCallback() {
         if (mScanCallback == null) {
             mScanCallback = new ScanCallback() {

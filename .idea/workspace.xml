@@ -5,12 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f1e3a571-9b4a-497a-b17f-2569a2630d5e" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/bluetooth/BLEAdvertisedData.java" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/gradle.xml" afterPath="$PROJECT_DIR$/.idea/gradle.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/app.iml" afterPath="$PROJECT_DIR$/app/app.iml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/Extensions.java" afterPath="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/Extensions.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/Transmitter.java" afterPath="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/Transmitter.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/bluetooth/BluetoothManager.java" afterPath="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/bluetooth/BluetoothManager.java" />
     </list>
     <ignored path="GINcose-Android.iws" />
@@ -58,7 +54,7 @@
         <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/bluetooth/BluetoothManager.java">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="120" column="0" selection-start-line="120" selection-start-column="0" selection-end-line="120" selection-end-column="0" />
+              <caret line="401" column="0" selection-start-line="401" selection-start-column="0" selection-end-line="401" selection-end-column="0" />
               <folding>
                 <element signature="e#3704#3705#0" expanded="true" />
                 <element signature="e#3754#3755#0" expanded="true" />
@@ -70,8 +66,8 @@
       <file leaf-file-name="Extensions.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/Extensions.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.79576397">
-              <caret line="51" column="4" selection-start-line="51" selection-start-column="4" selection-end-line="51" selection-end-column="4" />
+            <state vertical-scroll-proportion="0.8184569">
+              <caret line="52" column="1" selection-start-line="52" selection-start-column="1" selection-end-line="52" selection-end-column="1" />
               <folding>
                 <element signature="e#1226#1227#0" expanded="true" />
                 <element signature="e#1276#1277#0" expanded="true" />
@@ -1696,8 +1692,8 @@
       <list>
         <option value="$PROJECT_DIR$/app/build.gradle" />
         <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/Transmitter.java" />
-        <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/bluetooth/BluetoothManager.java" />
         <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/Extensions.java" />
+        <option value="$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/bluetooth/BluetoothManager.java" />
       </list>
     </option>
   </component>
@@ -1773,6 +1769,28 @@
             <PATH_ELEMENT>
               <option name="myItemId" value="gincose" />
               <option name="myItemType" value="com.android.tools.idea.navigator.nodes.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="GINcose-Android" />
+              <option name="myItemType" value="com.android.tools.idea.navigator.nodes.AndroidViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="app" />
+              <option name="myItemType" value="com.android.tools.idea.navigator.nodes.AndroidModuleNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="java" />
+              <option name="myItemType" value="com.android.tools.idea.navigator.nodes.AndroidSourceTypeNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="gincose" />
+              <option name="myItemType" value="com.android.tools.idea.navigator.nodes.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="bluetooth" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
         </subPane>
@@ -2087,7 +2105,7 @@
     <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/bluetooth/BluetoothManager.java">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
-          <caret line="120" column="0" selection-start-line="120" selection-start-column="0" selection-end-line="120" selection-end-column="0" />
+          <caret line="401" column="0" selection-start-line="401" selection-start-column="0" selection-end-line="401" selection-end-column="0" />
           <folding>
             <element signature="e#3704#3705#0" expanded="true" />
             <element signature="e#3754#3755#0" expanded="true" />
@@ -2097,8 +2115,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/src/main/java/com/gintechsystems/gincose/Extensions.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.79576397">
-          <caret line="51" column="4" selection-start-line="51" selection-start-column="4" selection-end-line="51" selection-end-column="4" />
+        <state vertical-scroll-proportion="0.8184569">
+          <caret line="52" column="1" selection-start-line="52" selection-start-column="1" selection-end-line="52" selection-end-column="1" />
           <folding>
             <element signature="e#1226#1227#0" expanded="true" />
             <element signature="e#1276#1277#0" expanded="true" />
