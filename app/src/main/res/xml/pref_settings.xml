@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <Preference
+        android:key="transmitter_key"
+        android:title="@string/transmitter_title"
+        android:widgetLayout="@layout/preference_arrow" />
+
+    <Preference
+        android:key="device_info_key"
+        android:title="@string/device_info_title"
+        android:widgetLayout="@layout/preference_arrow" />
+
+    <Preference
+        android:key="dexcom_account_key"
+        android:title="@string/dexcom_account_title"
+        android:widgetLayout="@layout/preference_arrow"  />
+
+</PreferenceScreen>

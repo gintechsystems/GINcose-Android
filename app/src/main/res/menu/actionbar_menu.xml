@@ -2,20 +2,22 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
       xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <item android:id="@+id/action_calibrate"
-          android:title="@string/calibrate_text"
-          android:orderInCategory="1"
-          app:showAsAction="never" />
+    <group android:id="@+id/action_menu_group">
+        <item android:id="@+id/action_calibrate"
+            android:title="@string/calibrate_text"
+            android:orderInCategory="1"
+            app:showAsAction="never" />
 
-    <item android:id="@+id/action_start_sensor"
-          android:title="@string/start_sensor_text"
-          android:orderInCategory="2"
-          android:visible="false"
-          app:showAsAction="never" />
+        <item android:id="@+id/action_start_sensor"
+            android:title="@string/start_sensor_text"
+            android:orderInCategory="2"
+            android:visible="false"
+            app:showAsAction="never" />
 
-    <item android:id="@+id/action_stop_sensor"
-          android:title="@string/stop_sensor_text"
-          android:orderInCategory="2"
-          android:visible="false"
-          app:showAsAction="never" />
+        <item android:id="@+id/action_stop_sensor"
+            android:title="@string/stop_sensor_text"
+            android:orderInCategory="2"
+            android:visible="false"
+            app:showAsAction="never" />
+    </group>
 </menu>

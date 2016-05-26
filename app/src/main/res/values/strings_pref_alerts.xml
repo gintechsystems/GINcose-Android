@@ -1,0 +1,11 @@
+<resources>
+
+    <!-- Strings related to Alerts -->
+    <string name="urgent_low_title">Urgent Low</string>
+    <string name="low_title">Low</string>
+    <string name="high_title">High</string>
+    <string name="rise_rate">Rise Rate</string>
+    <string name="fall_rate">Fall Rate</string>
+    <string name="signal_loss">Signal Loss</string>
+
+</resources>

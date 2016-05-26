@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <Preference
+        android:key="urgent_low_key"
+        android:title="@string/urgent_low_title"
+        android:widgetLayout="@layout/preference_arrow" />
+
+    <Preference
+        android:key="low_key"
+        android:title="@string/low_title"
+        android:widgetLayout="@layout/preference_arrow" />
+
+    <Preference
+        android:key="high_key"
+        android:title="@string/high_title"
+        android:widgetLayout="@layout/preference_arrow" />
+
+    <Preference
+        android:key="rise_rate_key"
+        android:title="@string/rise_rate"
+        android:widgetLayout="@layout/preference_arrow" />
+
+    <Preference
+        android:key="fall_rate_key"
+        android:title="@string/fall_rate"
+        android:widgetLayout="@layout/preference_arrow" />
+
+    <Preference
+        android:key="signal_loss_key"
+        android:title="@string/signal_loss"
+        android:widgetLayout="@layout/preference_arrow" />
+
+</PreferenceScreen>

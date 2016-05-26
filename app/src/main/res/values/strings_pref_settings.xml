@@ -1,0 +1,8 @@
+<resources>
+
+    <!-- Strings related to Settings -->
+    <string name="transmitter_title">Transmitter</string>
+    <string name="device_info_title">Device Info</string>
+    <string name="dexcom_account_title">Dexcom Account</string>
+
+</resources>

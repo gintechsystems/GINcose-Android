@@ -1,21 +1,16 @@
 package com.gintechsystems.gincose;
 
 import android.os.Bundle;
-import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 
 /**
  * Created by joeginley on 4/8/16.
  */
-public class SettingsActivity extends PreferenceFragment {
+public class HelpActivity extends PreferenceFragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -34,7 +29,7 @@ public class SettingsActivity extends PreferenceFragment {
 
         setHasOptionsMenu(true);
 
-        addPreferencesFromResource(R.xml.pref_settings);
+        //addPreferencesFromResource(R.xml.pref_alerts);
     }
 
     @Override

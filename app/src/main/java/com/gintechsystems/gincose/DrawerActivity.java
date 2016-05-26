@@ -154,11 +154,17 @@ public class DrawerActivity extends AppCompatActivity
                     getSupportActionBar().setTitle("GINcose");
                 }
                 else {
-                    if (fragment.getTag().equals("settingsFrag")) {
+                    if (fragment.getTag().equals("alertsFrag")) {
+                        getSupportActionBar().setTitle("Alerts");
+                    }
+                    else if (fragment.getTag().equals("settingsFrag")) {
                         getSupportActionBar().setTitle("Settings");
                     }
                     else if (fragment.getTag().equals("shareFrag")) {
                         getSupportActionBar().setTitle("Share");
+                    }
+                    else if (fragment.getTag().equals("helpFrag")) {
+                        getSupportActionBar().setTitle("Help");
                     }
                 }
             }
@@ -175,17 +181,27 @@ public class DrawerActivity extends AppCompatActivity
         String navName = mAdapter.getItem(position);
 
         switch (navName) {
+            case "Alerts":
+                showNewFragment(new AlertsActivity(), "alertsFrag");
+                break;
             case "Settings":
                 showNewFragment(new SettingsActivity(), "settingsFrag");
                 break;
             case "Share":
                 showNewFragment(new ShareActivity(), "shareFrag");
                 break;
+            case "Help":
+                showNewFragment(new HelpActivity(), "helpFrag");
+                break;
         }
 
         setTitle(navArray[position]);
 
         mDrawerList.setItemChecked(position, true);
+        mDrawerLayout.closeDrawer(mDrawerList);
+    }
+
+    public void closeDrawer() {
         mDrawerLayout.closeDrawer(mDrawerList);
     }
 

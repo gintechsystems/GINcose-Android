@@ -138,6 +138,13 @@ public class MainActivity extends DrawerActivity {
         }
     }
 
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+
+        closeDrawer();
+    }
+
     private void startBTManager() {
         if (GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterId != null) {
             if (GINcoseWrapper.getSharedInstance().btManager == null) {
