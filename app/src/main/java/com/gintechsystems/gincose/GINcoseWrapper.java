@@ -100,6 +100,18 @@ public class GINcoseWrapper extends Application {
         return ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 
+    public void saveTransmitterAddress(Activity act, String transmitterAddress) {
+        SharedPreferences defaultPrefs = act.getSharedPreferences("defaultPrefs", Context.MODE_PRIVATE);
+        SharedPreferences.Editor prefsEdit = defaultPrefs.edit();
+        prefsEdit.putString("defaultTransmitterAddress", transmitterAddress);
+        prefsEdit.apply();
+    }
+
+    public String getStoredTransmitterAddress(Activity act) {
+        SharedPreferences defaultPrefs = act.getSharedPreferences("defaultPrefs", Context.MODE_PRIVATE);
+        return defaultPrefs.getString("defaultTransmitterAddress", null);
+    }
+
     public void saveTransmitterId(Activity act, String transmitterId) {
         SharedPreferences defaultPrefs = act.getSharedPreferences("defaultPrefs", Context.MODE_PRIVATE);
         SharedPreferences.Editor prefsEdit = defaultPrefs.edit();
@@ -110,6 +122,18 @@ public class GINcoseWrapper extends Application {
     public String getStoredTransmitterId(Activity act) {
         SharedPreferences defaultPrefs = act.getSharedPreferences("defaultPrefs", Context.MODE_PRIVATE);
         return defaultPrefs.getString("defaultTransmitterId", null);
+    }
+
+    public void saveTransmitterName(Activity act, String transmitterName) {
+        SharedPreferences defaultPrefs = act.getSharedPreferences("defaultPrefs", Context.MODE_PRIVATE);
+        SharedPreferences.Editor prefsEdit = defaultPrefs.edit();
+        prefsEdit.putString("defaultTransmitterName", transmitterName);
+        prefsEdit.apply();
+    }
+
+    public String getStoredTransmitterName(Activity act) {
+        SharedPreferences defaultPrefs = act.getSharedPreferences("defaultPrefs", Context.MODE_PRIVATE);
+        return defaultPrefs.getString("defaultTransmitterName", null);
     }
 
     public void saveTransmitterBondState(Activity act, boolean transmitterBondState) {
@@ -134,6 +158,13 @@ public class GINcoseWrapper extends Application {
     public boolean getSensorSession(Activity act) {
         SharedPreferences defaultPrefs = act.getSharedPreferences("defaultPrefs", Context.MODE_PRIVATE);
         return defaultPrefs.getBoolean("defaultSensorSession", false);
+    }
+
+    public void removeStoredKey(Activity act, String key) {
+        SharedPreferences defaultPrefs = act.getSharedPreferences("defaultPrefs", Context.MODE_PRIVATE);
+        SharedPreferences.Editor prefsEdit = defaultPrefs.edit();
+        prefsEdit.remove(key);
+        prefsEdit.apply();
     }
 
     @SuppressWarnings("deprecation")

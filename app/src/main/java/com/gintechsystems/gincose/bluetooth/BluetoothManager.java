@@ -119,12 +119,19 @@ public class BluetoothManager {
             mGatt = device.connectGatt(GINcoseWrapper.getSharedInstance().currentAct, false, gattCallback);
             mDevice = device;
 
-            // Read bonding state changes for the device.
-            if (!GINcoseWrapper.getSharedInstance().isBondingReceiverRegistered) {
+            if (GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterAddress == null) {
                 GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterAddress = device.getAddress();
 
+                GINcoseWrapper.getSharedInstance().saveTransmitterAddress(GINcoseWrapper.getSharedInstance().currentAct, device.getAddress());
+            }
+            if (GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterName == null) {
                 GINcoseWrapper.getSharedInstance().defaultTransmitter.transmitterName = device.getName();
 
+                GINcoseWrapper.getSharedInstance().saveTransmitterName(GINcoseWrapper.getSharedInstance().currentAct, device.getName());
+            }
+
+            // Read bonding state changes for the device.
+            if (!GINcoseWrapper.getSharedInstance().isBondingReceiverRegistered) {
                 GINcoseWrapper.getSharedInstance().currentAct.registerReceiver(mPairReceiver, new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED));
                 GINcoseWrapper.getSharedInstance().isBondingReceiverRegistered = true;
             }
